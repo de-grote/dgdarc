@@ -96,7 +96,7 @@ fn start_game(
 ) {
     for selection in text_selection.iter() {
         if *selection == Interaction::Pressed {
-            state.set(GameState::Gaming);
+            state.set(GameState::LevelSelect);
         }
     }
 }

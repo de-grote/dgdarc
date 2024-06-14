@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.13.2"
+serde = { version = "1.0.203", features = ["serde_derive"] }
+toml = "0.8.14"

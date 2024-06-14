@@ -2,11 +2,14 @@ use bevy::prelude::*;
 
 use crate::{despawn_screen, GameState};
 
+mod hero;
+
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Gaming), setup)
+        app.init_resource::<Hero>()
+            .add_systems(OnEnter(GameState::Gaming), setup)
             .add_systems(OnExit(GameState::Gaming), despawn_screen::<GameWindow>);
     }
 }
@@ -15,7 +18,10 @@ impl Plugin for GamePlugin {
 #[derive(Component)]
 struct GameWindow;
 
-fn setup(mut commands: Commands) {
+#[derive(Resource, Clone, Copy, Default)]
+struct Hero {}
+
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         Camera2dBundle {
             camera: Camera {
@@ -28,6 +34,27 @@ fn setup(mut commands: Commands) {
                 ..default()
             },
             ..default()
+        },
+        GameWindow,
+    ));
+
+    commands.spawn((
+        SpriteBundle {
+            texture: asset_server.load("test.png"),
+            transform: Transform {
+                scale: Vec3::splat(4.0),
+                ..default()
+            },
+            sprite: Sprite {
+                custom_size: Some(Vec2::splat(1000.0)),
+                ..default()
+            },
+            ..default()
+        },
+        ImageScaleMode::Tiled {
+            tile_x: true,
+            tile_y: true,
+            stretch_value: 1.0,
         },
         GameWindow,
     ));

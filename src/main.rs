@@ -1,16 +1,23 @@
 #![allow(clippy::too_many_arguments)]
 
 pub mod game;
+pub mod level_select;
 pub mod main_menu;
+pub mod tile;
+
+use crate::tile::Tile;
 
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
+use serde::{Deserialize, Serialize};
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .init_state::<GameState>()
+        .init_resource::<LevelScene>()
         .add_plugins((
             main_menu::MenuPlugin,
+            level_select::LevelSelectPlugin,
             game::GamePlugin,
             FrameTimeDiagnosticsPlugin,
         ))
@@ -21,7 +28,15 @@ fn main() {
 pub enum GameState {
     #[default]
     MainMenu,
+    LevelSelect,
     Gaming,
+}
+
+#[derive(Resource, Default, Serialize, Deserialize)]
+struct LevelScene {
+    pub level_name: String,
+    pub background_texture: String,
+    pub grid: Vec<Vec<Tile>>,
 }
 
 pub fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
