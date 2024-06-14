@@ -1,7 +1,7 @@
 #![allow(clippy::too_many_arguments)]
 
-pub mod main_menu;
 pub mod game;
+pub mod main_menu;
 
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
 
