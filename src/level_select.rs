@@ -117,6 +117,9 @@ fn load_scene(id: u8) -> LevelScene {
     let s = level(id);
 
     let mut scene = toml::from_str::<LevelScene>(s).unwrap();
+    for (position, tile) in scene.points_of_interest.iter() {
+        scene.points_of_interest_map.insert(*position, *tile);
+    }
     scene.level = id;
     scene
 }

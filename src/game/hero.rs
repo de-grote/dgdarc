@@ -201,7 +201,7 @@ pub fn move_heros(
                 match *tile {
                     Tile::Spike => hero.health_bar.current_health -= 40.0,
                     Tile::Hole => hero.health_bar.current_health = -1.0,
-                    _ => ()
+                    _ => (),
                 };
                 hero.seen_poi.insert(grid_pos);
             }

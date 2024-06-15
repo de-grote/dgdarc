@@ -1,6 +1,9 @@
+use std::time::Duration;
+
 use bevy::input::mouse::MouseWheel;
 use bevy::{prelude::*, window::PrimaryWindow};
-use std::time::Duration;
+
+use hero::*;
 
 use crate::level_select::{LevelSelectWindow, ReenterLevel, WonLevel};
 use crate::tile::make_tile;
