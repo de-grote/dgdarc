@@ -4,6 +4,6 @@ points_of_interest = [[[10, 10], "Ground"]]
 
 [[heros]]
 hero_type = "JohnHeron"
-target = [50, 50]
+target = [100, 100]
 position = [0, 0]
 speed = 100

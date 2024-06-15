@@ -1,10 +1,13 @@
+use std::f32::consts::FRAC_PI_2;
+use std::ops::Add;
+use std::time::Duration;
+
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
 
 use crate::LevelScene;
 
-use super::AnimationTimer;
+use super::{AnimationTimer, FireWall};
 
 #[derive(Default, Debug, Clone, Copy, Component, Serialize, Deserialize)]
 pub struct Hero {
@@ -20,8 +23,6 @@ pub enum HeroType {
     JohnHeron,
     RerinGuard,
 }
-
-
 
 pub fn create_hero(
     mut commands: Commands,
@@ -67,12 +68,10 @@ pub fn move_heros(
         &mut Sprite,
         &mut AnimationTimer,
     )>,
+    fires: Query<&FireWall>,
 ) {
     for (mut hero, mut transform, mut atlas, mut sprite, mut timer) in query.iter_mut() {
         let direction = hero.target - hero.position;
-
-        // Flip sprite if we go to the right
-        sprite.flip_x = direction.x.is_sign_negative();
 
         // Animation
         const ANIMATION_SPEED: f32 = 0.01;
@@ -81,6 +80,46 @@ pub fn move_heros(
         if timer.just_finished() {
             atlas.index = if atlas.index == 3 { 0 } else { atlas.index + 1 }
         }
+
+        let clostest_fire = fires.iter().min_by(|x, y| {
+            x.position
+                .distance(hero.position)
+                .total_cmp(&y.position.distance(hero.position))
+        });
+        let direction = match clostest_fire {
+            Some(fire) => {
+                let distance = fire.position - hero.position;
+                if distance.length() <= 70.0 {
+                    let new_dir_a = Vec2 {
+                        x: distance.y,
+                        y: -distance.x,
+                    };
+                    let new_dir_b = Vec2 {
+                        x: -distance.y,
+                        y: distance.x,
+                    };
+                    let angle_a = new_dir_a.angle_between(direction).abs();
+                    let angle_b = new_dir_b.angle_between(direction).abs();
+                    if angle_a < angle_b {
+                        if angle_a < FRAC_PI_2 {
+                            new_dir_a.normalize() * direction.length()
+                        } else {
+                            direction
+                        }
+                    } else if angle_b < FRAC_PI_2 {
+                        new_dir_a.normalize() * direction.length()
+                    } else {
+                        direction
+                    }
+                } else {
+                    direction
+                }
+            }
+            None => direction,
+        };
+
+        // Flip sprite if we go to the right
+        sprite.flip_x = direction.x.is_sign_negative();
 
         // Finish when close to target
         if direction.length() < hero.speed * time.delta_seconds() {
