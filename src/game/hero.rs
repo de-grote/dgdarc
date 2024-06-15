@@ -1,6 +1,7 @@
 use std::f32::consts::{FRAC_PI_2};
 use std::ops::Add;
 use std::{fmt, time::Duration};
+use std::collections::HashSet;
 
 use rand::prelude::random;
 use bevy::{prelude::*, sprite::Anchor};
@@ -8,8 +9,9 @@ use serde::{Deserialize, Serialize};
 
 use super::{AnimationTimer, FireWall, GameWindow};
 use crate::LevelScene;
+use crate::tile::{Tile, world_to_grid};
 
-#[derive(Default, Debug, Clone, Copy, Component, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Component, Serialize, Deserialize)]
 pub struct Hero {
     pub target: Vec2,
     pub position: Vec2,
@@ -19,6 +21,8 @@ pub struct Hero {
     pub health_bar: HealthBar,
     #[serde(skip)]
     pub rand: u8,
+    #[serde(skip)]
+    pub seen_poi: HashSet<IVec2>,
 }
 
 #[derive(Default, Debug, Clone, Copy, Serialize)]
@@ -69,7 +73,7 @@ pub fn create_hero(
                     atlas: TextureAtlas { layout, index: 0 },
                     ..default()
                 },
-                *hero,
+                hero.clone(),
                 timer,
                 GameWindow,
             ))
@@ -124,6 +128,7 @@ pub fn move_heros(
         &mut AnimationTimer,
     )>,
     fires: Query<&FireWall>,
+    scene: Res<LevelScene>
 ) {
     for (mut hero, mut transform, mut atlas, mut sprite, mut timer) in query.iter_mut() {
         let direction = hero.target - hero.position;
@@ -180,6 +185,19 @@ pub fn move_heros(
             }
             None => direction,
         };
+        
+        //POI
+        let grid_pos = world_to_grid(hero.position);
+        if !hero.seen_poi.contains(&grid_pos) {
+            if let Some(tile) = scene.points_of_interest_map.get(&grid_pos) {
+                match *tile {
+                    Tile::Ground => {}
+                    Tile::Grass => {}
+                    Tile::Spike => hero.health_bar.current_health -= 40.0,
+                };
+                hero.seen_poi.insert(grid_pos);
+            }
+        }
 
         // Flip sprite if we go to the right
         sprite.flip_x = direction.x.is_sign_negative();

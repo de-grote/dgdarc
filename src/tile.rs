@@ -25,7 +25,7 @@ pub fn make_tile(
         SpriteBundle {
             texture,
             transform: Transform {
-                translation: Vec3::from((grid_to_world(position), 1.0)),
+                translation: Vec3::from((grid_to_world(position), 0.2)),
                 scale: Vec3::splat(4.0),
                 ..default()
             },
