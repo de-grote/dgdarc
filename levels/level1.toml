@@ -1,2 +1,8 @@
 level_name = "The beginning"
-background_texture = "test.png"
+background_texture = "EvilGrass.png"
+
+[[heros]]
+hero_type = "JohnHeron"
+target = [0, 0, 0]
+position = [1, 1, 1]
+speed = 1

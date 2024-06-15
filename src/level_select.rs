@@ -84,10 +84,15 @@ fn setup(mut commands: Commands) {
         });
 }
 
-fn button_pressed(query: Query<(&Interaction, &Level)>, mut scene: ResMut<LevelScene>) {
+fn button_pressed(
+    query: Query<(&Interaction, &Level)>,
+    mut scene: ResMut<LevelScene>,
+    mut state: ResMut<NextState<GameState>>,
+) {
     for (interaction, level) in query.iter() {
         if *interaction == Interaction::Pressed {
             *scene = load_scene(level.0);
+            state.set(GameState::Gaming);
         }
     }
 }

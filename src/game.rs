@@ -1,15 +1,16 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, window::PrimaryWindow};
 
-use crate::{despawn_screen, GameState};
+use crate::{despawn_screen, GameState, LevelScene};
+use hero::*;
 
-mod hero;
+pub mod hero;
 
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Hero>()
-            .add_systems(OnEnter(GameState::Gaming), setup)
+        app.add_systems(OnEnter(GameState::Gaming), (setup, create_hero))
+            .add_systems(Update, move_heros.run_if(in_state(GameState::Gaming)))
             .add_systems(OnExit(GameState::Gaming), despawn_screen::<GameWindow>);
     }
 }
@@ -18,10 +19,7 @@ impl Plugin for GamePlugin {
 #[derive(Component)]
 struct GameWindow;
 
-#[derive(Resource, Clone, Copy, Default)]
-struct Hero {}
-
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, scene: Res<LevelScene>, window: Query<&Window, With<PrimaryWindow>>) {
     commands.spawn((
         Camera2dBundle {
             camera: Camera {
@@ -38,15 +36,17 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         GameWindow,
     ));
 
+    let resolution = &window.single().resolution;
+
     commands.spawn((
         SpriteBundle {
-            texture: asset_server.load("test.png"),
+            texture: asset_server.load(&scene.background_texture),
             transform: Transform {
                 scale: Vec3::splat(4.0),
                 ..default()
             },
             sprite: Sprite {
-                custom_size: Some(Vec2::splat(1000.0)),
+                custom_size: Some(Vec2::new(resolution.width(), resolution.height())),
                 ..default()
             },
             ..default()

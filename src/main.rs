@@ -8,6 +8,7 @@ pub mod tile;
 use crate::tile::Tile;
 
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
+use game::hero::Hero;
 use serde::{Deserialize, Serialize};
 
 fn main() {
@@ -32,10 +33,11 @@ pub enum GameState {
     Gaming,
 }
 
-#[derive(Resource, Default, Serialize, Deserialize)]
-struct LevelScene {
+#[derive(Resource, Debug, Default, Serialize, Deserialize)]
+pub struct LevelScene {
     pub level_name: String,
     pub background_texture: String,
+    pub heros: Vec<Hero>, 
     // pub grid: Vec<Vec<Tile>>,
 }
 

@@ -1,50 +1,61 @@
-use std::time::Duration;
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
-#[derive(Default, Clone, Component)]
+use crate::LevelScene;
+
+#[derive(Default, Debug, Clone, Copy, Component, Serialize, Deserialize)]
 pub struct Hero {
     pub target: Vec3,
+    pub position: Vec3,
     pub speed: f32,
+    pub hero_type: HeroType,
+    #[serde(skip)]
     finished: bool,
+}
+
+#[derive(Default, Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum HeroType {
+    #[default]
+    JohnHeron,
+    RerinGuard,
 }
 
 #[derive(Component, Deref, DerefMut)]
 pub struct AnimationTimer(Timer);
 
 pub fn create_hero(
-    file: &'static str,
-    target: Vec3,
-    speed: f32,
-    start: Vec3,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    scene: Res<LevelScene>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    // Texture
-    let texture = asset_server.load(file);
-    let layout_not_fr = TextureAtlasLayout::from_grid(Vec2::splat(16.0), 4, 1, None, None);
-    let layout = texture_atlas_layouts.add(layout_not_fr);
-    //Hero
-    let hero = Hero {
-        target,
-        speed,
-        finished: false,
-    };
-    let timer = AnimationTimer(Timer::new(Duration::from_millis(100), TimerMode::Repeating));
-    // Spawn hero
-    commands.spawn((
-        SpriteSheetBundle {
-            texture,
-            transform: Transform {
-                translation: start,
+    for &hero in scene.heros.iter() {
+        // Texture
+        let texture = asset_server.load(match hero.hero_type {
+            HeroType::JohnHeron => "JohnHeron.png",
+            HeroType::RerinGuard => "RerinGuard.png",
+        });
+        let layout_not_fr = TextureAtlasLayout::from_grid(Vec2::splat(16.0), 4, 1, None, None);
+        let layout = texture_atlas_layouts.add(layout_not_fr);
+
+        // Hero
+        let timer = AnimationTimer(Timer::new(Duration::from_millis(100), TimerMode::Repeating));
+        // Spawn hero
+        commands.spawn((
+            SpriteSheetBundle {
+                texture,
+                transform: Transform {
+                    translation: hero.position,
+                    ..default()
+                },
+                atlas: TextureAtlas { layout, index: 1 },
                 ..default()
             },
-            atlas: TextureAtlas { layout, index: 1 },
-            ..default()
-        },
-        hero,
-        timer,
-    ));
+            hero,
+            timer,
+        ));
+    }
 }
 
 pub fn move_heros(
