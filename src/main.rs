@@ -52,9 +52,9 @@ pub struct LevelScene {
     pub level_name: String,
     pub background_texture: String,
     pub heros: Vec<Hero>,
-    pub points_of_interest: Vec<([i32; 2], Tile)>,
+    pub points_of_interest: Vec<(IVec2, Tile)>,
     #[serde(skip)]
-    pub points_of_interest_map: HashMap<[i32; 2], Tile>,
+    pub points_of_interest_map: HashMap<IVec2, Tile>,
 }
 
 pub fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {

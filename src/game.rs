@@ -51,7 +51,7 @@ pub struct AnimationTimer(Timer);
 
 fn setup(
     mut commands: Commands,
-    mut asset_server: Res<AssetServer>,
+    asset_server: Res<AssetServer>,
     scene: Res<LevelScene>,
     selected_spell: ResMut<Spell>,
     window: Query<&Window, With<PrimaryWindow>>,
@@ -135,7 +135,7 @@ fn setup(
             }
         });
     for (position, tile) in scene.points_of_interest.iter() {
-        make_tile(*tile, IVec2::from_array(*position),&mut commands, &asset_server)
+        make_tile(*tile, *position,&mut commands, &asset_server)
     }
 
     *selected_spell.into_inner() = Spell::FireWall;
