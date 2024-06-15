@@ -31,6 +31,7 @@ struct GameWindow;
 pub enum Spell {
     #[default]
     FireWall,
+    HealthBoost,
 }
 
 fn setup(
@@ -94,7 +95,7 @@ fn setup(
             GameWindow,
         ))
         .with_children(|parent| {
-            let spells = [Spell::FireWall];
+            let spells = [Spell::HealthBoost];
             for spell in spells {
                 parent.spawn((
                     ButtonBundle {
@@ -109,6 +110,7 @@ fn setup(
                         },
                         image: UiImage::new(asset_server.load(match spell {
                             Spell::FireWall => "FireSpell.png",
+                            Spell::HealthBoost => "HealingSpell.png"
                         })),
                         border_color: Color::RED.into(),
                         ..default()
