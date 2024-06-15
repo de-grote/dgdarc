@@ -13,7 +13,7 @@ pub fn make_tile(
     tile: Tile,
     position: IVec2,
     commands: &mut Commands,
-    asset_server: &mut AssetServer,
+    asset_server: &AssetServer,
 ) {
     let texture: Handle<Image> = asset_server.load(match tile {
         Tile::Grass => "EvilGrass.png",
@@ -25,6 +25,7 @@ pub fn make_tile(
             texture,
             transform: Transform {
                 translation: Vec3::from((grid_to_world(position), 1.0)),
+                scale: Vec3::splat(4.0),
                 ..default()
             },
             ..default()
@@ -38,15 +39,17 @@ pub fn grid_tile(position: Vec2, grid: Vec<Vec<Tile>>) -> Option<Tile> {
 }
 
 pub fn world_to_grid(position: Vec2) -> IVec2 {
-    let grid_pos = position/16.0;
-    IVec2 { x: grid_pos.x.round() as i32,
+    let grid_pos = position / 16.0;
+    IVec2 {
+        x: grid_pos.x.round() as i32,
         y: grid_pos.y.round() as i32,
     }
 }
 
 pub fn grid_to_world(position: IVec2) -> Vec2 {
     let grid_pos = position * 16;
-    Vec2 { x: grid_pos.x as f32,
+    Vec2 {
+        x: grid_pos.x as f32,
         y: grid_pos.y as f32,
     }
 }

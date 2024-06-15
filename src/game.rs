@@ -2,6 +2,7 @@ use bevy::{prelude::*, window::PrimaryWindow};
 
 use crate::{despawn_screen, GameState, LevelScene};
 use hero::*;
+use crate::tile::make_tile;
 
 pub mod hero;
 
@@ -37,7 +38,7 @@ pub enum Spell {
 
 fn setup(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    mut asset_server: Res<AssetServer>,
     scene: Res<LevelScene>,
     selected_spell: ResMut<Spell>,
     window: Query<&Window, With<PrimaryWindow>>,
@@ -65,6 +66,7 @@ fn setup(
             texture: asset_server.load(&scene.background_texture),
             transform: Transform {
                 scale: Vec3::splat(4.0),
+                translation: Vec3 { x: 8.0, y: 8.0, z: 0.1},
                 ..default()
             },
             sprite: Sprite {
@@ -119,6 +121,9 @@ fn setup(
                 ));
             }
         });
+    for (position, tile) in scene {
+        make_tile(*tile, IVec2::from_array(*position),&mut commands, &asset_server)
+    }
 
     *selected_spell.into_inner() = Spell::FireWall;
 }

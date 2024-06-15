@@ -72,7 +72,7 @@ pub fn move_heros(
 
         // Flip sprite if we go to the right
         sprite.flip_x = direction.x.is_sign_negative();
-        
+
         // Animation
         const ANIMATION_SPEED: f32 = 0.01;
         timer.tick(time.delta().mul_f32(hero.speed * ANIMATION_SPEED));

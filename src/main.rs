@@ -5,26 +5,29 @@ pub mod level_select;
 pub mod main_menu;
 pub mod tile;
 
-use std::collections::HashMap;
-use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
+use crate::tile::Tile;
 use bevy::window::PresentMode;
 use bevy::window::WindowMode;
+use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
 use game::hero::Hero;
 use serde::{Deserialize, Serialize};
-use crate::tile::Tile;
-
+use std::collections::HashMap;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()).set(WindowPlugin {
-            primary_window: Some(Window {
-                present_mode: PresentMode::AutoVsync,
-                mode: WindowMode::Windowed,
-                title: "Epic Game".to_string(),
-               ..default() 
-            }),
-            ..default()
-        }))
+        .add_plugins(
+            DefaultPlugins
+                .set(ImagePlugin::default_nearest())
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        present_mode: PresentMode::AutoVsync,
+                        mode: WindowMode::Windowed,
+                        title: "Epic Game".to_string(),
+                        ..default()
+                    }),
+                    ..default()
+                }),
+        )
         .init_state::<GameState>()
         .init_resource::<LevelScene>()
         .add_plugins((
@@ -48,10 +51,10 @@ pub enum GameState {
 pub struct LevelScene {
     pub level_name: String,
     pub background_texture: String,
-    pub heros: Vec<Hero>, 
-    pub points_of_interest: Vec<([i32;2], Tile)>,
+    pub heros: Vec<Hero>,
+    pub points_of_interest: Vec<([i32; 2], Tile)>,
     #[serde(skip)]
-    pub points_of_interest_map: HashMap<[i32;2], Tile>,
+    pub points_of_interest_map: HashMap<[i32; 2], Tile>,
 }
 
 pub fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
