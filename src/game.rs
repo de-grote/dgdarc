@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use bevy::input::mouse::{MouseMotion, MouseWheel};
+use bevy::input::mouse::MouseWheel;
 use bevy::{prelude::*, window::PrimaryWindow};
 
 use crate::tile::make_tile;
@@ -278,7 +278,7 @@ fn animate_and_despawn_fire(
 
 fn move_camera(
     mut camera_query: Query<&mut Transform, With<Camera>>,
-    mut event_reader: EventReader<MouseMotion>,
+    mut event_reader: EventReader<CursorMoved>,
     mut scroll_event: EventReader<MouseWheel>,
     interaction_query: Query<&Interaction>,
     input: Res<ButtonInput<MouseButton>>,
@@ -293,8 +293,9 @@ fn move_camera(
         if input.pressed(MouseButton::Right) {
             let mut transform = camera_query.single_mut();
             // the constant is just a random value that felt right
-            let zoom_factor = transform.scale.x * 0.6;
-            transform.translation += Vec3::new(-event.delta.x, event.delta.y, 0.0) * zoom_factor;
+            let zoom_factor = transform.scale.x;
+            let delta = event.delta.unwrap_or_default();
+            transform.translation += Vec3::new(-delta.x, delta.y, 0.0) * zoom_factor;
         }
     }
     for event in scroll_event.read() {
