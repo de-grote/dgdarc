@@ -19,7 +19,18 @@ impl Plugin for GamePlugin {
 #[derive(Component)]
 struct GameWindow;
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>, scene: Res<LevelScene>, window: Query<&Window, With<PrimaryWindow>>) {
+#[derive(Component, Resource, Default, Debug, Clone, Copy)]
+pub enum Spell {
+    #[default]
+    FireWall,
+}
+
+fn setup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    scene: Res<LevelScene>,
+    window: Query<&Window, With<PrimaryWindow>>,
+) {
     commands.spawn((
         Camera2dBundle {
             camera: Camera {
@@ -58,4 +69,40 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, scene: Res<Leve
         },
         GameWindow,
     ));
+
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    bottom: Val::Px(10.0),
+                    left: Val::Px(10.0),
+                    position_type: PositionType::Absolute,
+                    ..default()
+                },
+                background_color: Color::LIME_GREEN.into(),
+                ..default()
+            },
+            GameWindow,
+        ))
+        .with_children(|parent| {
+            let spells = [Spell::FireWall];
+            for spell in spells {
+                parent.spawn((
+                    ButtonBundle {
+                        style: Style {
+                            align_self: AlignSelf::Center,
+                            min_width: Val::Vw(6.0),
+                            min_height: Val::Vw(6.0),
+                            margin: UiRect::all(Val::Px(10.0)),
+                            ..default()
+                        },
+                        image: UiImage::new(asset_server.load(match spell {
+                            Spell::FireWall => "test.png",
+                        })),
+                        ..default()
+                    },
+                    spell
+                ));
+            }
+        });
 }

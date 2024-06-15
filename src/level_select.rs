@@ -65,7 +65,6 @@ fn setup(mut commands: Commands) {
                             ..default()
                         },
                         Level(i),
-                        LevelSelectWindow,
                     ))
                     .with_children(|parent| {
                         parent.spawn(

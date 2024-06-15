@@ -10,13 +10,15 @@ pub enum Tile {
 }
 
 impl Tile {
-    fn make_tile(
+    pub fn make_tile(
         tile: Tile,
         position: Vec3,
         mut commands: Commands,
         asset_server: Res<AssetServer>,
     ) {
         let texture: Handle<Image> = asset_server.load(match tile {
+            Self::Grass => "EvilGrass.png",
+            Self::Spike => "Spikes.png",
             _ => "test.png",
         });
         commands.spawn((

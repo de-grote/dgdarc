@@ -5,8 +5,6 @@ pub mod level_select;
 pub mod main_menu;
 pub mod tile;
 
-use crate::tile::Tile;
-
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
 use bevy::window::PresentMode;
 use bevy::window::WindowMode;
