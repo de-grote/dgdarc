@@ -16,6 +16,7 @@ impl Plugin for GamePlugin {
                 (
                     select_spell_button.run_if(in_state(GameState::Gaming)),
                     select_spell_keybind.run_if(in_state(GameState::Gaming)),
+                    highligh_selected_spell.run_if(in_state(GameState::Gaming)),
                     move_heros.run_if(in_state(GameState::Gaming)),
                 ),
             )
@@ -27,7 +28,7 @@ impl Plugin for GamePlugin {
 #[derive(Component)]
 struct GameWindow;
 
-#[derive(Component, Resource, Default, Debug, Clone, Copy)]
+#[derive(Component, Resource, Default, Debug, Clone, Copy, PartialEq)]
 pub enum Spell {
     #[default]
     FireWall,
@@ -38,6 +39,7 @@ fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     scene: Res<LevelScene>,
+    selected_spell: ResMut<Spell>,
     window: Query<&Window, With<PrimaryWindow>>,
 ) {
     commands.spawn((
@@ -89,13 +91,12 @@ fn setup(
                     display: Display::Flex,
                     ..default()
                 },
-                background_color: Color::LIME_GREEN.into(),
                 ..default()
             },
             GameWindow,
         ))
         .with_children(|parent| {
-            let spells = [Spell::HealthBoost];
+            let spells = [Spell::FireWall, Spell::HealthBoost];
             for spell in spells {
                 parent.spawn((
                     ButtonBundle {
@@ -110,21 +111,19 @@ fn setup(
                         },
                         image: UiImage::new(asset_server.load(match spell {
                             Spell::FireWall => "FireSpell.png",
-                            Spell::HealthBoost => "HealingSpell.png"
+                            Spell::HealthBoost => "HealingSpell.png",
                         })),
-                        border_color: Color::RED.into(),
                         ..default()
                     },
                     spell,
                 ));
             }
         });
+
+    *selected_spell.into_inner() = Spell::FireWall;
 }
 
-fn select_spell_button(
-    query: Query<(&Interaction, &Spell)>,
-    mut selected_spell: ResMut<Spell>,
-) {
+fn select_spell_button(query: Query<(&Interaction, &Spell)>, mut selected_spell: ResMut<Spell>) {
     for (interaction, &spell) in query.iter() {
         if *interaction == Interaction::Pressed {
             *selected_spell = spell;
@@ -132,11 +131,28 @@ fn select_spell_button(
     }
 }
 
-fn select_spell_keybind(
-    input: Res<ButtonInput<KeyCode>>,
-    mut selected_spell: ResMut<Spell>,
-) {
-    if input.any_just_pressed([KeyCode::Digit0, KeyCode::Numpad0]) {
+fn select_spell_keybind(input: Res<ButtonInput<KeyCode>>, mut selected_spell: ResMut<Spell>) {
+    if input.any_just_pressed([KeyCode::Digit1, KeyCode::Numpad1]) {
         *selected_spell = Spell::FireWall;
+    } else if input.any_just_pressed([KeyCode::Digit2, KeyCode::Numpad2]) {
+        *selected_spell = Spell::HealthBoost;
+    }
+}
+
+const BORDER_HIGHLIGHT: BorderColor = BorderColor(Color::ORANGE_RED);
+const BORDER_NOT_HIGHLIGHT: BorderColor = BorderColor(Color::WHITE);
+
+fn highligh_selected_spell(
+    selected_spell: Res<Spell>,
+    mut query: Query<(&Spell, &mut BorderColor)>,
+) {
+    if selected_spell.is_changed() {
+        for (spell, border) in query.iter_mut() {
+            *border.into_inner() = if spell == selected_spell.as_ref() {
+                BORDER_HIGHLIGHT
+            } else {
+                BORDER_NOT_HIGHLIGHT
+            }
+        }
     }
 }
