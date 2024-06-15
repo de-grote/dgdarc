@@ -1,3 +1,5 @@
+use std::sync::OnceLock;
+
 use bevy::prelude::*;
 
 use crate::{despawn_screen, GameState, LevelScene};
@@ -114,11 +116,22 @@ fn reenter_level(
 }
 
 fn load_scene(id: u8) -> LevelScene {
-    let s = level(id);
+    if let Some(data) = LEVEL_DATA.get() {
+        return data[id as usize - 1].clone();
+    }
 
-    let mut scene = toml::from_str::<LevelScene>(s).unwrap();
-    scene.level = id;
-    scene
+    let res: Vec<LevelScene> = (1..=NUMBER_OF_LEVELS)
+        .map(|id| {
+            let s = level(id);
+
+            let mut scene = toml::from_str::<LevelScene>(s).unwrap();
+            scene.level = id;
+            scene
+        })
+        .collect();
+    let out = res[id as usize - 1].clone();
+    LEVEL_DATA.set(res).unwrap();
+    out
 }
 
 const fn level(id: u8) -> &'static str {
@@ -127,6 +140,8 @@ const fn level(id: u8) -> &'static str {
         _ => unimplemented!(),
     }
 }
+
+static LEVEL_DATA: OnceLock<Vec<LevelScene>> = OnceLock::new();
 
 const NUMBER_OF_LEVELS: u8 = 1;
 const LEVEL1: &str = include_str!("../levels/level1.toml");

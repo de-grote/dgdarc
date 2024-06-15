@@ -49,7 +49,7 @@ pub enum GameState {
     Gaming,
 }
 
-#[derive(Resource, Debug, Default, Serialize, Deserialize)]
+#[derive(Resource, Debug, Default, Serialize, Deserialize, Clone)]
 pub struct LevelScene {
     pub level_name: String,
     pub background_texture: String,
