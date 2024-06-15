@@ -23,6 +23,7 @@ impl Plugin for GamePlugin {
                     animate_and_despawn_fire.run_if(in_state(GameState::Gaming)),
                     cast_spell.run_if(in_state(GameState::Gaming)),
                     move_heros.run_if(in_state(GameState::Gaming)),
+                    update_health_bars.run_if(in_state(GameState::Gaming)),
                 ),
             )
             .add_systems(OnExit(GameState::Gaming), despawn_screen::<GameWindow>);
@@ -31,7 +32,7 @@ impl Plugin for GamePlugin {
 
 /// Annotate everything specific to the game window with this component
 #[derive(Component)]
-struct GameWindow;
+pub struct GameWindow;
 
 #[derive(Component, Resource, Default, Debug, Clone, Copy, PartialEq)]
 pub enum Spell {

@@ -14,7 +14,7 @@ impl Plugin for MenuPlugin {
 
 /// Annotate everything specific to the menu window with this component
 #[derive(Component)]
-struct MenuWindow;
+pub struct MenuWindow;
 
 #[derive(Component)]
 struct StartButton;

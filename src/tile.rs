@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
+use crate::game::GameWindow;
 
 #[derive(Resource, Debug, Default, Serialize, Deserialize, Component, Copy, Clone)]
 pub enum Tile {
@@ -31,6 +32,7 @@ pub fn make_tile(
             ..default()
         },
         tile,
+        GameWindow,
     ));
 }
 pub fn grid_tile(position: Vec2, grid: Vec<Vec<Tile>>) -> Option<Tile> {

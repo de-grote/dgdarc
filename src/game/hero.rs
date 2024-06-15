@@ -1,10 +1,10 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::Anchor};
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
+use std::{fmt, time::Duration};
 
 use crate::LevelScene;
 
-use super::AnimationTimer;
+use super::{AnimationTimer, GameWindow};
 
 #[derive(Default, Debug, Clone, Copy, Component, Serialize, Deserialize)]
 pub struct Hero {
@@ -12,6 +12,15 @@ pub struct Hero {
     pub position: Vec2,
     pub speed: f32,
     pub hero_type: HeroType,
+    #[serde(flatten)]
+    pub health_bar: HealthBar,
+}
+
+#[derive(Default, Debug, Clone, Copy, Serialize)]
+pub struct HealthBar {
+    pub max_health: f32,
+    #[serde(skip_serializing)]
+    pub current_health: f32,
 }
 
 #[derive(Default, Debug, Clone, Copy, Serialize, Deserialize)]
@@ -21,7 +30,8 @@ pub enum HeroType {
     RerinGuard,
 }
 
-
+#[derive(Component)]
+pub struct HealthBarComponent;
 
 pub fn create_hero(
     mut commands: Commands,
@@ -41,20 +51,60 @@ pub fn create_hero(
         // Hero
         let timer = AnimationTimer(Timer::new(Duration::from_millis(100), TimerMode::Repeating));
         // Spawn hero
-        commands.spawn((
-            SpriteSheetBundle {
-                texture,
-                transform: Transform {
-                    translation: hero.position.extend(1.0),
-                    scale: Vec3::splat(4.0),
+        commands
+            .spawn((
+                SpriteSheetBundle {
+                    texture,
+                    transform: Transform {
+                        translation: hero.position.extend(1.0),
+                        scale: Vec3::splat(4.0),
+                        ..default()
+                    },
+                    atlas: TextureAtlas { layout, index: 0 },
                     ..default()
                 },
-                atlas: TextureAtlas { layout, index: 0 },
-                ..default()
-            },
-            hero,
-            timer,
-        ));
+                hero,
+                timer,
+                GameWindow,
+            ))
+            .with_children(|parent| {
+                // healthbar
+                parent
+                    .spawn((
+                        SpriteBundle {
+                            transform: Transform {
+                                translation: Vec3::new(0.0, 10.0, 5.0),
+                                scale: Vec3::new(15.0, 2.0, 1.0),
+                                ..default()
+                            },
+                            sprite: Sprite {
+                                color: Color::RED,
+                                custom_size: Some(Vec2::ONE),
+                                ..default()
+                            },
+                            ..default()
+                        },
+                        HealthBarComponent,
+                    ))
+                    .with_children(|parent| {
+                        parent.spawn((
+                            SpriteBundle {
+                                sprite: Sprite {
+                                    color: Color::FUCHSIA,
+                                    anchor: Anchor::CenterLeft,
+                                    ..default()
+                                },
+                                transform: Transform {
+                                    scale: Vec3::ONE,
+                                    translation: Vec3::new(-0.5, 0.0, 0.0),
+                                    ..default()
+                                },
+                                ..default()
+                            },
+                            HealthBarComponent,
+                        ));
+                    });
+            });
     }
 }
 
@@ -92,5 +142,71 @@ pub fn move_heros(
             hero.position += direction.normalize() * speed * time.delta_seconds();
         }
         transform.translation = hero.position.extend(1.0);
+    }
+}
+
+pub fn update_health_bars(
+    query: Query<(&Children, &Parent), With<HealthBarComponent>>,
+    mut healthbars: Query<&mut Transform, With<HealthBarComponent>>,
+    heros: Query<&Hero>,
+) {
+    for (hp, hero) in query.iter() {
+        // idk if there is a better way to get the hero and hp at the same time
+        let Some(&hp) = hp.iter().next() else {
+            continue;
+        };
+        let Ok(mut hp) = healthbars.get_mut(hp) else {
+            continue;
+        };
+        let Ok(hero) = heros.get(hero.get()) else {
+            continue;
+        };
+        let hp_ratio = hero.health_bar.current_health / hero.health_bar.max_health;
+        hp.scale.x = hp_ratio.max(0.0);
+    }
+}
+
+// chat gpts fever dream to get deserializing working
+impl<'de> Deserialize<'de> for HealthBar {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(field_identifier, rename_all = "snake_case")]
+        enum Field {
+            MaxHealth,
+        }
+        struct HealthBarVisitor;
+        impl<'de> serde::de::Visitor<'de> for HealthBarVisitor {
+            type Value = HealthBar;
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct HealthBar")
+            }
+            fn visit_map<V>(self, mut map: V) -> Result<HealthBar, V::Error>
+            where
+                V: serde::de::MapAccess<'de>,
+            {
+                let mut max_health = None;
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::MaxHealth => {
+                            if max_health.is_some() {
+                                return Err(serde::de::Error::duplicate_field("max_health"));
+                            }
+                            max_health = Some(map.next_value()?);
+                        }
+                    }
+                }
+                let max_health =
+                    max_health.ok_or_else(|| serde::de::Error::missing_field("max_health"))?;
+                Ok(HealthBar {
+                    max_health,
+                    current_health: max_health,
+                })
+            }
+        }
+        const FIELDS: &[&str] = &["max_health"];
+        deserializer.deserialize_struct("HealthBar", FIELDS, HealthBarVisitor)
     }
 }

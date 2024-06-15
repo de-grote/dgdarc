@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 
-use crate::tile::make_tile;
 use crate::{despawn_screen, GameState, LevelScene};
 
 pub struct LevelSelectPlugin;
@@ -20,7 +19,7 @@ impl Plugin for LevelSelectPlugin {
 }
 
 #[derive(Component)]
-struct LevelSelectWindow;
+pub struct LevelSelectWindow;
 
 #[derive(Component)]
 struct Level(pub u8);
