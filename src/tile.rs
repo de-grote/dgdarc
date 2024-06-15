@@ -8,12 +8,14 @@ pub enum Tile {
     Ground,
     Grass,
     Spike,
+    Hole,
 }
 
 pub fn make_tile(tile: Tile, position: IVec2, commands: &mut Commands, asset_server: &AssetServer) {
     let texture: Handle<Image> = asset_server.load(match tile {
         Tile::Grass => "EvilGrass.png",
         Tile::Spike => "Spikes.png",
+        Tile::Hole => "Pit.png",
         _ => "test.png",
     });
     commands.spawn((
@@ -36,7 +38,7 @@ pub fn grid_tile(position: Vec2, grid: Vec<Vec<Tile>>) -> Option<Tile> {
 }
 
 pub fn world_to_grid(position: Vec2) -> IVec2 {
-    let grid_pos = position / 16.0;
+    let grid_pos = position / 64.0;
     IVec2 {
         x: grid_pos.x.round() as i32,
         y: grid_pos.y.round() as i32,
@@ -44,7 +46,7 @@ pub fn world_to_grid(position: Vec2) -> IVec2 {
 }
 
 pub fn grid_to_world(position: IVec2) -> Vec2 {
-    let grid_pos = position * 16;
+    let grid_pos = position * 64;
     Vec2 {
         x: grid_pos.x as f32,
         y: grid_pos.y as f32,

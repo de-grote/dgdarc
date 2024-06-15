@@ -199,9 +199,9 @@ pub fn move_heros(
         if !hero.seen_poi.contains(&grid_pos) {
             if let Some(tile) = scene.points_of_interest_map.get(&grid_pos) {
                 match *tile {
-                    Tile::Ground => {}
-                    Tile::Grass => {}
                     Tile::Spike => hero.health_bar.current_health -= 40.0,
+                    Tile::Hole => hero.health_bar.current_health = -1.0,
+                    _ => ()
                 };
                 hero.seen_poi.insert(grid_pos);
             }

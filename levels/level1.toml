@@ -1,6 +1,6 @@
 level_name = "The beginning"
 background_texture = "EvilGrass.png"
-points_of_interest = [[[10, 10], "Ground"]]
+points_of_interest = [[[5, 3], "Ground"], [[3, 1], "Spike"], [[2, 1], "Hole"]]
 
 [[heros]]
 hero_type = "JohnHeron"
