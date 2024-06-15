@@ -36,7 +36,7 @@ pub enum GameState {
 struct LevelScene {
     pub level_name: String,
     pub background_texture: String,
-    pub grid: Vec<Vec<Tile>>,
+    // pub grid: Vec<Vec<Tile>>,
 }
 
 pub fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
