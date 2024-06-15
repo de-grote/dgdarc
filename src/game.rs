@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use bevy::input::mouse::{MouseMotion, MouseWheel};
 use bevy::{prelude::*, window::PrimaryWindow};
 
 use crate::tile::make_tile;
@@ -24,6 +25,7 @@ impl Plugin for GamePlugin {
                     cast_spell.run_if(in_state(GameState::Gaming)),
                     move_heros.run_if(in_state(GameState::Gaming)),
                     update_health_bars.run_if(in_state(GameState::Gaming)),
+                    move_camera.run_if(in_state(GameState::Gaming)),
                 ),
             )
             .add_systems(OnExit(GameState::Gaming), despawn_screen::<GameWindow>);
@@ -142,12 +144,7 @@ fn setup(
             }
         });
     for (position, tile) in scene.points_of_interest.iter() {
-        make_tile(
-            *tile,
-            *position,
-            &mut commands,
-            &asset_server,
-        )
+        make_tile(*tile, *position, &mut commands, &asset_server)
     }
 
     *selected_spell.into_inner() = Spell::None;
@@ -276,5 +273,41 @@ fn animate_and_despawn_fire(
         if animation.just_finished() {
             atlas.index = if atlas.index == 5 { 0 } else { atlas.index + 1 }
         }
+    }
+}
+
+fn move_camera(
+    mut camera_query: Query<&mut Transform, With<Camera>>,
+    mut event_reader: EventReader<MouseMotion>,
+    mut scroll_event: EventReader<MouseWheel>,
+    interaction_query: Query<&Interaction>,
+    input: Res<ButtonInput<MouseButton>>,
+) {
+    for event in event_reader.read() {
+        if !interaction_query
+            .iter()
+            .all(|interaction| *interaction == Interaction::None)
+        {
+            break;
+        }
+        if input.pressed(MouseButton::Right) {
+            let mut transform = camera_query.single_mut();
+            // the constant is just a random value that felt right
+            let zoom_factor = transform.scale.x * 0.6;
+            transform.translation += Vec3::new(-event.delta.x, event.delta.y, 0.0) * zoom_factor;
+        }
+    }
+    for event in scroll_event.read() {
+        if !interaction_query
+            .iter()
+            .all(|interaction| *interaction == Interaction::None)
+        {
+            break;
+        }
+        let mut transform = camera_query.single_mut();
+        const SCROLL_SPEED: f32 = 0.1;
+        transform.scale = (transform.scale.xy() - (event.x + event.y) * SCROLL_SPEED)
+            .max(Vec2::splat(0.3))
+            .extend(1.0);
     }
 }
