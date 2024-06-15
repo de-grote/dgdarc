@@ -10,6 +10,8 @@ use bevy::window::PresentMode;
 use bevy::window::WindowMode;
 use game::hero::Hero;
 use serde::{Deserialize, Serialize};
+use crate::tile::Tile;
+
 
 fn main() {
     App::new()
@@ -46,7 +48,7 @@ pub struct LevelScene {
     pub level_name: String,
     pub background_texture: String,
     pub heros: Vec<Hero>, 
-    // pub grid: Vec<Vec<Tile>>,
+    pub points_of_interest: Vec<(Tile, [u32;2])>,
 }
 
 pub fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {

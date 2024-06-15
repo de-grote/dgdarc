@@ -98,6 +98,9 @@ fn button_pressed(
 
 fn load_scene(id: u8) -> LevelScene {
     let s = level(id);
+    // let mut scene = toml::from_str::<LevelScene>(s).unwrap();
+    // scene.points_of_interest.push((Spike, [60, 60]));
+    // println!("{}", toml::to_string(&scene).unwrap());
     toml::from_str::<LevelScene>(s).unwrap()
 }
 
