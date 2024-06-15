@@ -43,7 +43,7 @@ pub enum Spell {
 }
 
 #[derive(Component, Clone, PartialEq)]
-struct FireWall {
+pub struct FireWall {
     pub position: Vec2,
     pub ttl: Timer,
 }
