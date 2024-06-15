@@ -58,7 +58,7 @@ pub struct LevelScene {
     #[serde(skip)]
     pub points_of_interest_map: HashMap<IVec2, Tile>,
     #[serde(skip)]
-    pub level: u8,
+    pub level: usize,
 }
 
 #[derive(Event, Copy, Clone, Debug)]

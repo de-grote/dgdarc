@@ -8,7 +8,8 @@ pub struct LevelSelectPlugin;
 
 impl Plugin for LevelSelectPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::LevelSelect), (setup, reenter_level))
+        app.init_resource::<LevelsWon>()
+            .add_systems(OnEnter(GameState::LevelSelect), (setup, reenter_level))
             .add_systems(
                 Update,
                 button_pressed.run_if(in_state(GameState::LevelSelect)),
@@ -24,15 +25,15 @@ impl Plugin for LevelSelectPlugin {
 pub struct LevelSelectWindow;
 
 #[derive(Component)]
-pub struct Level(pub u8);
+pub struct Level(pub usize);
+
+#[derive(Resource, Debug, Default, DerefMut, Deref)]
+pub struct LevelsWon(pub [bool; NUMBER_OF_LEVELS]);
 
 #[derive(Component)]
-pub struct WonLevel(pub u8);
+pub struct ReenterLevel(pub usize);
 
-#[derive(Component)]
-pub struct ReenterLevel(pub u8);
-
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands, levels_won: Res<LevelsWon>) {
     commands.spawn((
         Camera2dBundle {
             camera: Camera {
@@ -70,6 +71,12 @@ fn setup(mut commands: Commands) {
                                 align_self: AlignSelf::Center,
                                 ..default()
                             },
+                            background_color: if levels_won[i - 1] {
+                                Color::GOLD
+                            } else {
+                                Color::WHITE
+                            }
+                            .into(),
                             ..default()
                         },
                         Level(i),
@@ -115,9 +122,9 @@ fn reenter_level(
     }
 }
 
-fn load_scene(id: u8) -> LevelScene {
+fn load_scene(id: usize) -> LevelScene {
     if let Some(data) = LEVEL_DATA.get() {
-        return data[id as usize - 1].clone();
+        return data[id - 1].clone();
     }
 
     let res: Vec<LevelScene> = (1..=NUMBER_OF_LEVELS)
@@ -125,16 +132,20 @@ fn load_scene(id: u8) -> LevelScene {
             let s = level(id);
 
             let mut scene = toml::from_str::<LevelScene>(s).unwrap();
+            for (position, tile) in scene.points_of_interest.iter() {
+                scene.points_of_interest_map.insert(*position, *tile);
+            }
+
             scene.level = id;
             scene
         })
         .collect();
-    let out = res[id as usize - 1].clone();
+    let out = res[id - 1].clone();
     LEVEL_DATA.set(res).unwrap();
     out
 }
 
-const fn level(id: u8) -> &'static str {
+const fn level(id: usize) -> &'static str {
     match id {
         1 => LEVEL1,
         _ => unimplemented!(),
@@ -143,5 +154,5 @@ const fn level(id: u8) -> &'static str {
 
 static LEVEL_DATA: OnceLock<Vec<LevelScene>> = OnceLock::new();
 
-const NUMBER_OF_LEVELS: u8 = 1;
+const NUMBER_OF_LEVELS: usize = 1;
 const LEVEL1: &str = include_str!("../levels/level1.toml");

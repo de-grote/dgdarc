@@ -3,7 +3,7 @@ use std::time::Duration;
 use bevy::input::mouse::MouseWheel;
 use bevy::{prelude::*, window::PrimaryWindow};
 
-use crate::level_select::{LevelSelectWindow, ReenterLevel, WonLevel};
+use crate::level_select::{LevelSelectWindow, LevelsWon, ReenterLevel};
 use crate::tile::make_tile;
 use crate::{despawn_screen, EndGameEvent, GameState, LevelScene};
 use hero::*;
@@ -345,6 +345,7 @@ fn register_win(
     mut commands: Commands,
     mut event_reader: EventReader<EndGameEvent>,
     level: Res<LevelScene>,
+    mut levels_won: ResMut<LevelsWon>,
     mut state: ResMut<NextState<GameRunning>>,
 ) {
     for event in event_reader.read() {
@@ -355,7 +356,7 @@ fn register_win(
             ..default()
         };
         if let EndGameEvent::Win = event {
-            commands.spawn(WonLevel(level.level));
+            levels_won[level.level - 1] = true;
             commands.spawn((
                 TextBundle {
                     text: Text::from_section(
