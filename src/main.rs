@@ -31,6 +31,7 @@ fn main() {
         )
         .init_state::<GameState>()
         .init_resource::<LevelScene>()
+        .add_event::<EndGameEvent>()
         .add_plugins((
             main_menu::MenuPlugin,
             level_select::LevelSelectPlugin,

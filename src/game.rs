@@ -1,7 +1,6 @@
-use std::time::Duration;
-
 use bevy::input::mouse::MouseWheel;
 use bevy::{prelude::*, window::PrimaryWindow};
+use std::time::Duration;
 
 use crate::level_select::WonLevel;
 use crate::tile::make_tile;
@@ -15,6 +14,7 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Spell>()
+            .init_state::<GameRunning>()
             .add_systems(OnEnter(GameState::Gaming), (setup, create_hero))
             .add_systems(
                 Update,
@@ -23,13 +23,24 @@ impl Plugin for GamePlugin {
                     select_spell_keybind.run_if(in_state(GameState::Gaming)),
                     highlight_selected_spell.run_if(in_state(GameState::Gaming)),
                     animate_and_despawn_fire.run_if(in_state(GameState::Gaming)),
-                    cast_spell.run_if(in_state(GameState::Gaming)),
-                    move_heros.run_if(in_state(GameState::Gaming)),
-                    update_health_bars.run_if(in_state(GameState::Gaming)),
-                    move_camera.run_if(in_state(GameState::Gaming)),
-                    register_win.run_if(in_state(GameState::Gaming)),
+                    cast_spell.run_if(
+                        in_state(GameState::Gaming).and_then(in_state(GameRunning::Running)),
+                    ),
+                    move_heros.run_if(
+                        in_state(GameState::Gaming).and_then(in_state(GameRunning::Running)),
+                    ),
+                    update_health_bars.run_if(
+                        in_state(GameState::Gaming).and_then(in_state(GameRunning::Running)),
+                    ),
+                    move_camera.run_if(
+                        in_state(GameState::Gaming).and_then(in_state(GameRunning::Running)),
+                    ),
+                    wait_to_go_back.run_if(
+                        in_state(GameState::Gaming).and_then(in_state(GameRunning::AfterEnd)),
+                    ),
                 ),
             )
+            .add_systems(PostUpdate, register_win.run_if(in_state(GameState::Gaming)))
             .add_systems(OnExit(GameState::Gaming), despawn_screen::<GameWindow>);
     }
 }
@@ -46,6 +57,13 @@ pub enum Spell {
     HealthBoost,
 }
 
+#[derive(States, Default, Debug, Hash, PartialEq, Eq, Clone, Copy)]
+pub enum GameRunning {
+    #[default]
+    Running,
+    AfterEnd,
+}
+
 #[derive(Component, Clone, PartialEq)]
 pub struct FireWall {
     pub position: Vec2,
@@ -57,6 +75,7 @@ pub struct AnimationTimer(Timer);
 
 fn setup(
     mut commands: Commands,
+    mut running_state: ResMut<NextState<GameRunning>>,
     asset_server: Res<AssetServer>,
     scene: Res<LevelScene>,
     selected_spell: ResMut<Spell>,
@@ -150,6 +169,7 @@ fn setup(
     }
 
     *selected_spell.into_inner() = Spell::None;
+    running_state.set(GameRunning::Running);
 }
 
 fn select_spell_button(query: Query<(&Interaction, &Spell)>, mut selected_spell: ResMut<Spell>) {
@@ -315,16 +335,102 @@ fn move_camera(
     }
 }
 
+#[derive(Component)]
+struct BackToMenuButton;
+#[derive(Component)]
+struct RetryButton;
+
 fn register_win(
     mut commands: Commands,
     mut event_reader: EventReader<EndGameEvent>,
     level: Res<LevelScene>,
-    mut state: ResMut<NextState<GameState>>,
+    mut state: ResMut<NextState<GameRunning>>,
 ) {
     for event in event_reader.read() {
+        let style = Style {
+            position_type: PositionType::Absolute,
+            top: Val::Percent(40.0),
+            ..default()
+        };
         if let EndGameEvent::Win = event {
             commands.spawn(WonLevel(level.level));
+            commands.spawn((
+                TextBundle {
+                    text: Text::from_section(
+                        "You Win!",
+                        TextStyle {
+                            font_size: 100.0,
+                            color: Color::GREEN,
+                            ..default()
+                        },
+                    ),
+                    style,
+                    ..default()
+                },
+                GameWindow,
+            ));
+        } else {
+            commands.spawn((
+                TextBundle {
+                    text: Text::from_section(
+                        "You Lose!",
+                        TextStyle {
+                            font_size: 100.0,
+                            color: Color::RED,
+                            ..default()
+                        },
+                    )
+                    .with_justify(JustifyText::Center),
+                    style,
+                    ..default()
+                },
+                GameWindow,
+            ));
         }
-        state.set(GameState::LevelSelect);
+        commands
+            .spawn((
+                ButtonBundle {
+                    style: Style {
+                        position_type: PositionType::Absolute,
+                        ..default()
+                    },
+                    background_color: Color::FUCHSIA.into(),
+                    ..default()
+                },
+                BackToMenuButton,
+                GameWindow,
+            ))
+            .with_children(|parent| {
+                parent.spawn(TextBundle {
+                    text: Text::from_section(
+                        "Go Back To Menu",
+                        TextStyle {
+                            font_size: 60.0,
+                            color: Color::WHITE,
+                            ..default()
+                        },
+                    )
+                    .with_justify(JustifyText::Center),
+                    ..default()
+                });
+            });
+        state.set(GameRunning::AfterEnd);
+    }
+}
+
+fn wait_to_go_back(
+    menu: Query<&Interaction, With<BackToMenuButton>>,
+    retry: Query<&Interaction, With<RetryButton>>,
+    mut state: ResMut<NextState<GameState>>,
+) {
+    for &interaction in menu.iter() {
+        if interaction == Interaction::Pressed {
+            state.set(GameState::LevelSelect);
+        }
+    }
+    for &interaction in retry.iter() {
+        if interaction == Interaction::Pressed {
+            state.set(GameState::Gaming);
+        }
     }
 }
