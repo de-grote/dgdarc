@@ -8,12 +8,22 @@ pub mod tile;
 use crate::tile::Tile;
 
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
+use bevy::window::PresentMode;
+use bevy::window::WindowMode;
 use game::hero::Hero;
 use serde::{Deserialize, Serialize};
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()).set(WindowPlugin {
+            primary_window: Some(Window {
+                present_mode: PresentMode::AutoVsync,
+                mode: WindowMode::Windowed,
+                title: "Epic Game".to_string(),
+               ..default() 
+            }),
+            ..default()
+        }))
         .init_state::<GameState>()
         .init_resource::<LevelScene>()
         .add_plugins((
