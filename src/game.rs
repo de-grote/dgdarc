@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::{prelude::*, window::PrimaryWindow};
 
 use crate::{despawn_screen, GameState, LevelScene};
@@ -17,7 +19,9 @@ impl Plugin for GamePlugin {
                 (
                     select_spell_button.run_if(in_state(GameState::Gaming)),
                     select_spell_keybind.run_if(in_state(GameState::Gaming)),
-                    highligh_selected_spell.run_if(in_state(GameState::Gaming)),
+                    highlight_selected_spell.run_if(in_state(GameState::Gaming)),
+                    animate_and_despawn_fire.run_if(in_state(GameState::Gaming)),
+                    cast_spell.run_if(in_state(GameState::Gaming)),
                     move_heros.run_if(in_state(GameState::Gaming)),
                 ),
             )
@@ -35,6 +39,15 @@ pub enum Spell {
     FireWall,
     HealthBoost,
 }
+
+#[derive(Component, Clone, PartialEq)]
+struct FireWall {
+    pub position: Vec2,
+    pub ttl: Timer,
+}
+
+#[derive(Component, Deref, DerefMut)]
+pub struct AnimationTimer(Timer);
 
 fn setup(
     mut commands: Commands,
@@ -147,7 +160,7 @@ fn select_spell_keybind(input: Res<ButtonInput<KeyCode>>, mut selected_spell: Re
 const BORDER_HIGHLIGHT: BorderColor = BorderColor(Color::ORANGE_RED);
 const BORDER_NOT_HIGHLIGHT: BorderColor = BorderColor(Color::WHITE);
 
-fn highligh_selected_spell(
+fn highlight_selected_spell(
     selected_spell: Res<Spell>,
     mut query: Query<(&Spell, &mut BorderColor)>,
 ) {
@@ -158,6 +171,82 @@ fn highligh_selected_spell(
             } else {
                 BORDER_NOT_HIGHLIGHT
             }
+        }
+    }
+}
+
+fn cast_spell(
+    mut commands: Commands,
+    selected_spell: Res<Spell>,
+    window: Query<&Window, With<PrimaryWindow>>,
+    fire_walls: Query<&FireWall>,
+    input: Res<ButtonInput<MouseButton>>,
+    asset_server: Res<AssetServer>,
+    camera_query: Query<(&Camera, &GlobalTransform)>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+) {
+    let Some(mouse_position) = window.single().cursor_position() else {
+        return;
+    };
+    let (camera, global_transform) = camera_query.single();
+    let Some(ingame_position) = camera.viewport_to_world_2d(global_transform, mouse_position)
+    else {
+        return;
+    };
+    match selected_spell.as_ref() {
+        Spell::FireWall => {
+            if input.pressed(MouseButton::Left)
+                && !fire_walls
+                    .iter()
+                    .any(|wall| wall.position.distance(ingame_position) < 40.0)
+            {
+                let layout_not_fr =
+                    TextureAtlasLayout::from_grid(Vec2::splat(16.0), 6, 1, None, None);
+                let layout = texture_atlas_layouts.add(layout_not_fr);
+                commands.spawn((
+                    SpriteSheetBundle {
+                        transform: Transform {
+                            translation: ingame_position.extend(2.0),
+                            scale: Vec3::splat(4.0),
+                            ..default()
+                        },
+                        texture: asset_server.load("FireWall.png"),
+                        atlas: TextureAtlas { layout, index: 0 },
+                        ..default()
+                    },
+                    FireWall {
+                        position: ingame_position,
+                        ttl: Timer::from_seconds(5.0, TimerMode::Once),
+                    },
+                    AnimationTimer(Timer::new(Duration::from_millis(100), TimerMode::Repeating)),
+                    GameWindow,
+                ));
+            }
+        }
+        Spell::HealthBoost => {}
+    };
+}
+
+fn animate_and_despawn_fire(
+    mut commands: Commands,
+    mut query: Query<(
+        Entity,
+        &mut FireWall,
+        &mut TextureAtlas,
+        &mut AnimationTimer,
+    )>,
+    time: Res<Time>,
+) {
+    for (entity, mut firewall, mut atlas, mut animation) in query.iter_mut() {
+        firewall.ttl.tick(time.delta());
+        if firewall.ttl.finished() {
+            commands.entity(entity).despawn_recursive();
+        }
+
+        const ANIMATION_SPEED: f32 = 1.0;
+        animation.tick(time.delta().mul_f32(ANIMATION_SPEED));
+        if animation.just_finished() {
+            atlas.index = if atlas.index == 5 { 0 } else { atlas.index + 1 }
         }
     }
 }
