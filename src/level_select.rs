@@ -22,7 +22,10 @@ impl Plugin for LevelSelectPlugin {
 pub struct LevelSelectWindow;
 
 #[derive(Component)]
-struct Level(pub u8);
+pub struct Level(pub u8);
+
+#[derive(Component)]
+pub struct WonLevel(pub u8);
 
 fn setup(mut commands: Commands) {
     commands.spawn((
@@ -96,17 +99,13 @@ fn button_pressed(
     }
 }
 
-fn load_scene(
-    id: u8,
-) -> LevelScene {
+fn load_scene(id: u8) -> LevelScene {
     let s = level(id);
     // let mut scene = toml::from_str::<LevelScene>(s).unwrap();
     // scene.points_of_interest.push(([60, 60], Spike));
     // println!("{}", toml::to_string(&scene).unwrap());
     let mut scene = toml::from_str::<LevelScene>(s).unwrap();
-    for (position, tile) in scene.points_of_interest.iter() {
-        scene.points_of_interest_map.insert(*position, *tile);
-    }
+    scene.level = id;
     scene
 }
 

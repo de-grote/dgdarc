@@ -1,6 +1,6 @@
+use crate::game::GameWindow;
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::game::GameWindow;
 
 #[derive(Resource, Debug, Default, Serialize, Deserialize, Component, Copy, Clone)]
 pub enum Tile {
@@ -10,12 +10,7 @@ pub enum Tile {
     Spike,
 }
 
-pub fn make_tile(
-    tile: Tile,
-    position: IVec2,
-    commands: &mut Commands,
-    asset_server: &AssetServer,
-) {
+pub fn make_tile(tile: Tile, position: IVec2, commands: &mut Commands, asset_server: &AssetServer) {
     let texture: Handle<Image> = asset_server.load(match tile {
         Tile::Grass => "EvilGrass.png",
         Tile::Spike => "Spikes.png",

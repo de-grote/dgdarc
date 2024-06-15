@@ -1,27 +1,35 @@
+use std::collections::HashSet;
 use std::f32::consts::FRAC_PI_2;
 use std::{fmt, time::Duration};
-use std::collections::HashSet;
 
-use rand::prelude::random;
 use bevy::{prelude::*, sprite::Anchor};
+use rand::prelude::random;
 use serde::{Deserialize, Serialize};
 
 use super::{AnimationTimer, FireWall, GameWindow};
-use crate::LevelScene;
-use crate::tile::{Tile, world_to_grid};
+use crate::tile::{world_to_grid, Tile};
+use crate::{EndGameEvent, LevelScene};
 
 #[derive(Default, Debug, Clone, Component, Serialize, Deserialize)]
 pub struct Hero {
-    pub target: Vec2,
+    pub targets: Vec<Vec2>,
     pub position: Vec2,
     pub speed: f32,
     pub hero_type: HeroType,
+    #[serde(skip)]
+    pub current_target: usize,
     #[serde(flatten)]
     pub health_bar: HealthBar,
     #[serde(skip)]
     pub rand: u8,
     #[serde(skip)]
     pub seen_poi: HashSet<IVec2>,
+}
+
+impl Hero {
+    pub fn target(&self) -> Vec2 {
+        self.targets[self.current_target]
+    }
 }
 
 #[derive(Default, Debug, Clone, Copy, Serialize)]
@@ -127,10 +135,11 @@ pub fn move_heros(
         &mut AnimationTimer,
     )>,
     fires: Query<&FireWall>,
-    scene: Res<LevelScene>
+    scene: Res<LevelScene>,
+    mut event_writer: EventWriter<EndGameEvent>,
 ) {
     for (mut hero, mut transform, mut atlas, mut sprite, mut timer) in query.iter_mut() {
-        let direction = hero.target - hero.position;
+        let direction = hero.target() - hero.position;
 
         // Animation
         const ANIMATION_SPEED: f32 = 0.01;
@@ -150,7 +159,8 @@ pub fn move_heros(
                 let distance = fire.position - hero.position;
                 let distance_len = distance.length();
                 if distance_len <= 55.0 {
-                    hero.health_bar.current_health -= (55.0 - distance.length()) * time.delta_seconds();
+                    hero.health_bar.current_health -=
+                        (55.0 - distance.length()) * time.delta_seconds();
                 }
                 if distance_len <= 60.0 {
                     -distance
@@ -165,16 +175,15 @@ pub fn move_heros(
                     };
                     let angle_a = new_dir_a.angle_between(direction).abs();
                     let angle_b = new_dir_b.angle_between(direction).abs();
-                        if angle_a < FRAC_PI_2 || angle_b < FRAC_PI_2 {
-                            if hero.rand <= 128{
-                                new_dir_a.normalize() * direction.length()
-                            }
-                            else {
-                                new_dir_b.normalize() * direction.length()
-                            }
+                    if angle_a < FRAC_PI_2 || angle_b < FRAC_PI_2 {
+                        if hero.rand <= 128 {
+                            new_dir_a.normalize() * direction.length()
                         } else {
-                            direction
+                            new_dir_b.normalize() * direction.length()
                         }
+                    } else {
+                        direction
+                    }
                 } else {
                     if distance_len >= 100.0 {
                         hero.rand = random()
@@ -184,8 +193,8 @@ pub fn move_heros(
             }
             None => direction,
         };
-        
-        //POI
+
+        // POI
         let grid_pos = world_to_grid(hero.position);
         if !hero.seen_poi.contains(&grid_pos) {
             if let Some(tile) = scene.points_of_interest_map.get(&grid_pos) {
@@ -203,14 +212,21 @@ pub fn move_heros(
 
         // Finish when close to target
         if direction.length() < hero.speed * time.delta_seconds() {
-            hero.position = hero.target;
-            hero.target = -hero.target;
+            hero.position = hero.target();
+            hero.current_target += 1;
+            if hero.current_target == hero.targets.len() {
+                event_writer.send(EndGameEvent::Win);
+            }
         } else {
             // Movement
             let speed = hero.speed;
             hero.position += direction.normalize() * speed * time.delta_seconds();
         }
         transform.translation = hero.position.extend(1.0);
+
+        if hero.health_bar.current_health <= 0.0 {
+            event_writer.send(EndGameEvent::Loss);
+        }
     }
 }
 

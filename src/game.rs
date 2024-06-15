@@ -3,8 +3,9 @@ use std::time::Duration;
 use bevy::input::mouse::MouseWheel;
 use bevy::{prelude::*, window::PrimaryWindow};
 
+use crate::level_select::WonLevel;
 use crate::tile::make_tile;
-use crate::{despawn_screen, GameState, LevelScene};
+use crate::{despawn_screen, EndGameEvent, GameState, LevelScene};
 use hero::*;
 
 pub mod hero;
@@ -26,6 +27,7 @@ impl Plugin for GamePlugin {
                     move_heros.run_if(in_state(GameState::Gaming)),
                     update_health_bars.run_if(in_state(GameState::Gaming)),
                     move_camera.run_if(in_state(GameState::Gaming)),
+                    register_win.run_if(in_state(GameState::Gaming)),
                 ),
             )
             .add_systems(OnExit(GameState::Gaming), despawn_screen::<GameWindow>);
@@ -310,5 +312,19 @@ fn move_camera(
         transform.scale = (transform.scale.xy() - (event.x + event.y) * SCROLL_SPEED)
             .max(Vec2::splat(0.3))
             .extend(1.0);
+    }
+}
+
+fn register_win(
+    mut commands: Commands,
+    mut event_reader: EventReader<EndGameEvent>,
+    level: Res<LevelScene>,
+    mut state: ResMut<NextState<GameState>>,
+) {
+    for event in event_reader.read() {
+        if let EndGameEvent::Win = event {
+            commands.spawn(WonLevel(level.level));
+        }
+        state.set(GameState::LevelSelect);
     }
 }

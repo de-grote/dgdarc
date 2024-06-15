@@ -56,6 +56,14 @@ pub struct LevelScene {
     pub points_of_interest: Vec<(IVec2, Tile)>,
     #[serde(skip)]
     pub points_of_interest_map: HashMap<IVec2, Tile>,
+    #[serde(skip)]
+    pub level: u8,
+}
+
+#[derive(Event, Copy, Clone, Debug)]
+pub enum EndGameEvent {
+    Win,
+    Loss,
 }
 
 pub fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
