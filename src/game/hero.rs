@@ -4,6 +4,8 @@ use std::time::Duration;
 
 use crate::LevelScene;
 
+use super::AnimationTimer;
+
 #[derive(Default, Debug, Clone, Copy, Component, Serialize, Deserialize)]
 pub struct Hero {
     pub target: Vec2,
@@ -19,8 +21,7 @@ pub enum HeroType {
     RerinGuard,
 }
 
-#[derive(Component, Deref, DerefMut)]
-pub struct AnimationTimer(Timer);
+
 
 pub fn create_hero(
     mut commands: Commands,
@@ -48,7 +49,7 @@ pub fn create_hero(
                     scale: Vec3::splat(4.0),
                     ..default()
                 },
-                atlas: TextureAtlas { layout, index: 1 },
+                atlas: TextureAtlas { layout, index: 0 },
                 ..default()
             },
             hero,
