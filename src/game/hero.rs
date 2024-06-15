@@ -1,7 +1,10 @@
+use std::f32::consts::{FRAC_PI_2};
+use std::ops::Add;
+use std::{fmt, time::Duration};
+
+use rand::prelude::random;
 use bevy::{prelude::*, sprite::Anchor};
 use serde::{Deserialize, Serialize};
-use std::f32::consts::FRAC_PI_2;
-use std::{fmt, time::Duration};
 
 use super::{AnimationTimer, FireWall, GameWindow};
 use crate::LevelScene;
@@ -14,6 +17,8 @@ pub struct Hero {
     pub hero_type: HeroType,
     #[serde(flatten)]
     pub health_bar: HealthBar,
+    #[serde(skip)]
+    pub rand: u8,
 }
 
 #[derive(Default, Debug, Clone, Copy, Serialize)]
@@ -36,10 +41,10 @@ pub struct HealthBarComponent;
 pub fn create_hero(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    scene: Res<LevelScene>,
+    mut scene: ResMut<LevelScene>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    for &hero in scene.heros.iter() {
+    for hero in scene.heros.iter_mut() {
         // Texture
         let texture = asset_server.load(match hero.hero_type {
             HeroType::JohnHeron => "JohnHeron.png",
@@ -47,6 +52,7 @@ pub fn create_hero(
         });
         let layout_not_fr = TextureAtlasLayout::from_grid(Vec2::splat(16.0), 4, 1, None, None);
         let layout = texture_atlas_layouts.add(layout_not_fr);
+        hero.rand = random();
 
         // Hero
         let timer = AnimationTimer(Timer::new(Duration::from_millis(100), TimerMode::Repeating));
@@ -63,7 +69,7 @@ pub fn create_hero(
                     atlas: TextureAtlas { layout, index: 0 },
                     ..default()
                 },
-                hero,
+                *hero,
                 timer,
                 GameWindow,
             ))
@@ -155,18 +161,20 @@ pub fn move_heros(
                     };
                     let angle_a = new_dir_a.angle_between(direction).abs();
                     let angle_b = new_dir_b.angle_between(direction).abs();
-                    if angle_a < angle_b {
-                        if angle_a < FRAC_PI_2 {
-                            new_dir_a.normalize() * direction.length()
+                        if angle_a < FRAC_PI_2 || angle_b < FRAC_PI_2 {
+                            if hero.rand <= 128{
+                                new_dir_a.normalize() * direction.length()
+                            }
+                            else {
+                                new_dir_b.normalize() * direction.length()
+                            }
                         } else {
                             direction
                         }
-                    } else if angle_b < FRAC_PI_2 {
-                        new_dir_a.normalize() * direction.length()
-                    } else {
-                        direction
-                    }
                 } else {
+                    if distance_len >= 100.0 {
+                        hero.rand = random()
+                    }
                     direction
                 }
             }
