@@ -143,7 +143,7 @@ fn setup(
     for (position, tile) in scene.points_of_interest.iter() {
         make_tile(
             *tile,
-            IVec2::from_array(*position),
+            *position,
             &mut commands,
             &asset_server,
         )
