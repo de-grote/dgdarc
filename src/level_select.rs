@@ -105,7 +105,7 @@ fn button_pressed(
 fn reenter_level(
     query: Query<&ReenterLevel>,
     mut scene: ResMut<LevelScene>,
-    mut state: ResMut<NextState<GameState>>
+    mut state: ResMut<NextState<GameState>>,
 ) {
     for q in query.iter() {
         *scene = load_scene(q.0);
@@ -117,9 +117,6 @@ fn load_scene(id: u8) -> LevelScene {
     let s = level(id);
 
     let mut scene = toml::from_str::<LevelScene>(s).unwrap();
-    for (position, tile) in scene.points_of_interest.iter() {
-        scene.points_of_interest_map.insert(*position, *tile);
-    }
     scene.level = id;
     scene
 }
