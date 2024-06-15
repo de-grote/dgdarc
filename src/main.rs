@@ -5,6 +5,7 @@ pub mod level_select;
 pub mod main_menu;
 pub mod tile;
 
+use std::collections::HashMap;
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
 use bevy::window::PresentMode;
 use bevy::window::WindowMode;
@@ -48,7 +49,9 @@ pub struct LevelScene {
     pub level_name: String,
     pub background_texture: String,
     pub heros: Vec<Hero>, 
-    pub points_of_interest: Vec<(Tile, [u32;2])>,
+    pub points_of_interest: Vec<([i32;2], Tile)>,
+    #[serde(skip)]
+    pub points_of_interest_map: HashMap<[i32;2], Tile>,
 }
 
 pub fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
