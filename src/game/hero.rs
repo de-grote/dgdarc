@@ -138,7 +138,13 @@ pub fn move_heros(
         let direction = match clostest_fire {
             Some(fire) => {
                 let distance = fire.position - hero.position;
-                if distance.length() <= 70.0 {
+                let distance_len = distance.length();
+                if distance_len <= 55.0 {
+                    hero.health_bar.current_health -= (55.0 - distance.length()) * time.delta_seconds();
+                }
+                if distance_len <= 60.0 {
+                    -distance
+                } else if distance_len <= 70.0 {
                     let new_dir_a = Vec2 {
                         x: distance.y,
                         y: -distance.x,
