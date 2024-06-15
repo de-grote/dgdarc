@@ -6,7 +6,7 @@ pub struct LevelSelectPlugin;
 
 impl Plugin for LevelSelectPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::LevelSelect), setup)
+        app.add_systems(OnEnter(GameState::LevelSelect), (setup, reenter_level))
             .add_systems(
                 Update,
                 button_pressed.run_if(in_state(GameState::LevelSelect)),
@@ -26,6 +26,9 @@ pub struct Level(pub u8);
 
 #[derive(Component)]
 pub struct WonLevel(pub u8);
+
+#[derive(Component)]
+pub struct ReenterLevel(pub u8);
 
 fn setup(mut commands: Commands) {
     commands.spawn((
@@ -99,11 +102,20 @@ fn button_pressed(
     }
 }
 
+fn reenter_level(
+    query: Query<&ReenterLevel>,
+    mut scene: ResMut<LevelScene>,
+    mut state: ResMut<NextState<GameState>>
+) {
+    for q in query.iter() {
+        *scene = load_scene(q.0);
+        state.set(GameState::Gaming);
+    }
+}
+
 fn load_scene(id: u8) -> LevelScene {
     let s = level(id);
-    // let mut scene = toml::from_str::<LevelScene>(s).unwrap();
-    // scene.points_of_interest.push(([60, 60], Spike));
-    // println!("{}", toml::to_string(&scene).unwrap());
+
     let mut scene = toml::from_str::<LevelScene>(s).unwrap();
     scene.level = id;
     scene

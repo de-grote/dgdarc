@@ -2,7 +2,7 @@ use bevy::input::mouse::MouseWheel;
 use bevy::{prelude::*, window::PrimaryWindow};
 use std::time::Duration;
 
-use crate::level_select::WonLevel;
+use crate::level_select::{LevelSelectWindow, ReenterLevel, WonLevel};
 use crate::tile::make_tile;
 use crate::{despawn_screen, EndGameEvent, GameState, LevelScene};
 use hero::*;
@@ -248,7 +248,7 @@ fn cast_spell(
                     .any(|wall| wall.position.distance(ingame_position) < 40.0)
             {
                 let layout_not_fr =
-                    TextureAtlasLayout::from_grid(Vec2::splat(16.0), 6, 1, None, None);
+                    TextureAtlasLayout::from_grid(Vec2::new(16.0, 32.0), 10, 1, None, None);
                 let layout = texture_atlas_layouts.add(layout_not_fr);
                 commands.spawn((
                     SpriteSheetBundle {
@@ -293,7 +293,7 @@ fn animate_and_despawn_fire(
         const ANIMATION_SPEED: f32 = 1.0;
         animation.tick(time.delta().mul_f32(ANIMATION_SPEED));
         if animation.just_finished() {
-            atlas.index = if atlas.index == 5 { 0 } else { atlas.index + 1 }
+            atlas.index = if atlas.index == 9 { 4 } else { atlas.index + 1 }
         }
     }
 }
@@ -350,6 +350,7 @@ fn register_win(
         let style = Style {
             position_type: PositionType::Absolute,
             top: Val::Percent(40.0),
+            justify_self: JustifySelf::Center,
             ..default()
         };
         if let EndGameEvent::Win = event {
@@ -392,6 +393,8 @@ fn register_win(
                 ButtonBundle {
                     style: Style {
                         position_type: PositionType::Absolute,
+                        top: Val::Percent(60.0),
+                        justify_self: JustifySelf::Center,
                         ..default()
                     },
                     background_color: Color::FUCHSIA.into(),
@@ -414,13 +417,44 @@ fn register_win(
                     ..default()
                 });
             });
+        commands
+            .spawn((
+                ButtonBundle {
+                    style: Style {
+                        position_type: PositionType::Absolute,
+                        top: Val::Percent(80.0),
+                        justify_self: JustifySelf::Center,
+                        ..default()
+                    },
+                    background_color: Color::FUCHSIA.into(),
+                    ..default()
+                },
+                RetryButton,
+                GameWindow,
+            ))
+            .with_children(|parent| {
+                parent.spawn(TextBundle {
+                    text: Text::from_section(
+                        "Retry",
+                        TextStyle {
+                            font_size: 60.0,
+                            color: Color::WHITE,
+                            ..default()
+                        },
+                    )
+                    .with_justify(JustifyText::Center),
+                    ..default()
+                });
+            });
         state.set(GameRunning::AfterEnd);
     }
 }
 
 fn wait_to_go_back(
+    mut commands: Commands,
     menu: Query<&Interaction, With<BackToMenuButton>>,
     retry: Query<&Interaction, With<RetryButton>>,
+    level: Res<LevelScene>,
     mut state: ResMut<NextState<GameState>>,
 ) {
     for &interaction in menu.iter() {
@@ -430,7 +464,9 @@ fn wait_to_go_back(
     }
     for &interaction in retry.iter() {
         if interaction == Interaction::Pressed {
-            state.set(GameState::Gaming);
+            // janky but it works
+            commands.spawn((ReenterLevel(level.level), LevelSelectWindow));
+            state.set(GameState::LevelSelect);
         }
     }
 }
