@@ -2,9 +2,9 @@ use std::time::Duration;
 
 use bevy::{prelude::*, window::PrimaryWindow};
 
+use crate::tile::make_tile;
 use crate::{despawn_screen, GameState, LevelScene};
 use hero::*;
-use crate::tile::make_tile;
 
 pub mod hero;
 
@@ -36,6 +36,7 @@ struct GameWindow;
 #[derive(Component, Resource, Default, Debug, Clone, Copy, PartialEq)]
 pub enum Spell {
     #[default]
+    None,
     FireWall,
     HealthBoost,
 }
@@ -51,7 +52,7 @@ pub struct AnimationTimer(Timer);
 
 fn setup(
     mut commands: Commands,
-    mut asset_server: Res<AssetServer>,
+    asset_server: Res<AssetServer>,
     scene: Res<LevelScene>,
     selected_spell: ResMut<Spell>,
     window: Query<&Window, With<PrimaryWindow>>,
@@ -79,7 +80,11 @@ fn setup(
             texture: asset_server.load(&scene.background_texture),
             transform: Transform {
                 scale: Vec3::splat(4.0),
-                translation: Vec3 { x: 8.0, y: 8.0, z: 0.1},
+                translation: Vec3 {
+                    x: 8.0,
+                    y: 8.0,
+                    z: 0.1,
+                },
                 ..default()
             },
             sprite: Sprite {
@@ -127,6 +132,7 @@ fn setup(
                         image: UiImage::new(asset_server.load(match spell {
                             Spell::FireWall => "FireSpell.png",
                             Spell::HealthBoost => "HealingSpell.png",
+                            Spell::None => unreachable!(),
                         })),
                         ..default()
                     },
@@ -135,10 +141,15 @@ fn setup(
             }
         });
     for (position, tile) in scene.points_of_interest.iter() {
-        make_tile(*tile, IVec2::from_array(*position),&mut commands, &asset_server)
+        make_tile(
+            *tile,
+            IVec2::from_array(*position),
+            &mut commands,
+            &asset_server,
+        )
     }
 
-    *selected_spell.into_inner() = Spell::FireWall;
+    *selected_spell.into_inner() = Spell::None;
 }
 
 fn select_spell_button(query: Query<(&Interaction, &Spell)>, mut selected_spell: ResMut<Spell>) {
@@ -151,9 +162,17 @@ fn select_spell_button(query: Query<(&Interaction, &Spell)>, mut selected_spell:
 
 fn select_spell_keybind(input: Res<ButtonInput<KeyCode>>, mut selected_spell: ResMut<Spell>) {
     if input.any_just_pressed([KeyCode::Digit1, KeyCode::Numpad1]) {
-        *selected_spell = Spell::FireWall;
+        *selected_spell = if selected_spell.as_ref() == &Spell::FireWall {
+            Spell::None
+        } else {
+            Spell::FireWall
+        }
     } else if input.any_just_pressed([KeyCode::Digit2, KeyCode::Numpad2]) {
-        *selected_spell = Spell::HealthBoost;
+        *selected_spell = if selected_spell.as_ref() == &Spell::HealthBoost {
+            Spell::None
+        } else {
+            Spell::HealthBoost
+        }
     }
 }
 
@@ -183,6 +202,7 @@ fn cast_spell(
     input: Res<ButtonInput<MouseButton>>,
     asset_server: Res<AssetServer>,
     camera_query: Query<(&Camera, &GlobalTransform)>,
+    interaction_query: Query<&Interaction>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let Some(mouse_position) = window.single().cursor_position() else {
@@ -193,9 +213,16 @@ fn cast_spell(
     else {
         return;
     };
+    let pressed = || {
+        input.pressed(MouseButton::Left)
+            && !interaction_query
+                .iter()
+                .any(|interaction| *interaction == Interaction::Pressed)
+    };
     match selected_spell.as_ref() {
+        Spell::None => {}
         Spell::FireWall => {
-            if input.pressed(MouseButton::Left)
+            if pressed()
                 && !fire_walls
                     .iter()
                     .any(|wall| wall.position.distance(ingame_position) < 40.0)
