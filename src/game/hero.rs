@@ -6,12 +6,10 @@ use crate::LevelScene;
 
 #[derive(Default, Debug, Clone, Copy, Component, Serialize, Deserialize)]
 pub struct Hero {
-    pub target: Vec3,
-    pub position: Vec3,
+    pub target: Vec2,
+    pub position: Vec2,
     pub speed: f32,
     pub hero_type: HeroType,
-    #[serde(skip)]
-    finished: bool,
 }
 
 #[derive(Default, Debug, Clone, Copy, Serialize, Deserialize)]
@@ -46,7 +44,8 @@ pub fn create_hero(
             SpriteSheetBundle {
                 texture,
                 transform: Transform {
-                    translation: hero.position,
+                    translation: hero.position.extend(1.0),
+                    scale: Vec3::splat(4.0),
                     ..default()
                 },
                 atlas: TextureAtlas { layout, index: 1 },
@@ -69,28 +68,28 @@ pub fn move_heros(
     )>,
 ) {
     for (mut hero, mut transform, mut atlas, mut sprite, mut timer) in query.iter_mut() {
-        if hero.finished {
-            // Skip
-            continue;
-        }
-        let direction = hero.target - transform.translation;
+        let direction = hero.target - hero.position;
 
         // Flip sprite if we go to the right
-        sprite.flip_x = direction.x < f32::EPSILON;
-
-        // May need a const to not look weird
-        timer.tick(time.delta().mul_f32(hero.speed * 0.016666667));
+        sprite.flip_x = direction.x.is_sign_negative();
+        
         // Animation
+        const ANIMATION_SPEED: f32 = 0.01;
+        timer.tick(time.delta().mul_f32(hero.speed * ANIMATION_SPEED));
+
         if timer.just_finished() {
-            atlas.index = if atlas.index == 4 { 0 } else { atlas.index + 1 }
+            atlas.index = if atlas.index == 3 { 0 } else { atlas.index + 1 }
         }
 
         // Finish when close to target
-        if direction.length().abs() < 1.0 {
-            hero.finished = true
+        if direction.length() < hero.speed * time.delta_seconds() {
+            hero.position = hero.target;
+            hero.target = -hero.target;
         } else {
             // Movement
-            transform.translation += direction.normalize() * time.delta_seconds() * hero.target;
+            let speed = hero.speed;
+            hero.position += direction.normalize() * speed * time.delta_seconds();
         }
+        transform.translation = hero.position.extend(1.0);
     }
 }

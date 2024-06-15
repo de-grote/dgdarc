@@ -3,6 +3,6 @@ background_texture = "EvilGrass.png"
 
 [[heros]]
 hero_type = "JohnHeron"
-target = [0, 0, 0]
-position = [1, 1, 1]
-speed = 1
+target = [50, 50]
+position = [0, 0]
+speed = 100
