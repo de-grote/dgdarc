@@ -1,5 +1,4 @@
-use std::f32::consts::{FRAC_PI_2};
-use std::ops::Add;
+use std::f32::consts::FRAC_PI_2;
 use std::{fmt, time::Duration};
 
 use rand::prelude::random;
@@ -102,7 +101,7 @@ pub fn create_hero(
                                 },
                                 transform: Transform {
                                     scale: Vec3::ONE,
-                                    translation: Vec3::new(-0.5, 0.0, 0.0),
+                                    translation: Vec3::new(-0.5, 0.0, 0.1),
                                     ..default()
                                 },
                                 ..default()
