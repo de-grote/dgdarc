@@ -9,8 +9,16 @@ pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Gaming), (setup, create_hero))
-            .add_systems(Update, move_heros.run_if(in_state(GameState::Gaming)))
+        app.init_resource::<Spell>()
+            .add_systems(OnEnter(GameState::Gaming), (setup, create_hero))
+            .add_systems(
+                Update,
+                (
+                    select_spell_button.run_if(in_state(GameState::Gaming)),
+                    select_spell_keybind.run_if(in_state(GameState::Gaming)),
+                    move_heros.run_if(in_state(GameState::Gaming)),
+                ),
+            )
             .add_systems(OnExit(GameState::Gaming), despawn_screen::<GameWindow>);
     }
 }
@@ -77,6 +85,7 @@ fn setup(
                     bottom: Val::Px(10.0),
                     left: Val::Px(10.0),
                     position_type: PositionType::Absolute,
+                    display: Display::Flex,
                     ..default()
                 },
                 background_color: Color::LIME_GREEN.into(),
@@ -93,16 +102,39 @@ fn setup(
                             align_self: AlignSelf::Center,
                             min_width: Val::Vw(6.0),
                             min_height: Val::Vw(6.0),
-                            margin: UiRect::all(Val::Px(10.0)),
+                            display: Display::Flex,
+                            border: UiRect::all(Val::Px(5.0)),
+                            margin: UiRect::all(Val::Px(3.0)),
                             ..default()
                         },
                         image: UiImage::new(asset_server.load(match spell {
-                            Spell::FireWall => "test.png",
+                            Spell::FireWall => "FireSpell.png",
                         })),
+                        border_color: Color::RED.into(),
                         ..default()
                     },
-                    spell
+                    spell,
                 ));
             }
         });
+}
+
+fn select_spell_button(
+    query: Query<(&Interaction, &Spell)>,
+    mut selected_spell: ResMut<Spell>,
+) {
+    for (interaction, &spell) in query.iter() {
+        if *interaction == Interaction::Pressed {
+            *selected_spell = spell;
+        }
+    }
+}
+
+fn select_spell_keybind(
+    input: Res<ButtonInput<KeyCode>>,
+    mut selected_spell: ResMut<Spell>,
+) {
+    if input.any_just_pressed([KeyCode::Digit0, KeyCode::Numpad0]) {
+        *selected_spell = Spell::FireWall;
+    }
 }
