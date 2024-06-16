@@ -343,6 +343,14 @@ fn cast_spell(
                         healing_duration.mul_f32(1.0 / 14.0),
                         TimerMode::Repeating,
                     )),
+                    AudioBundle {
+                        source: asset_server.load("effects/healingSpell.wav"),
+                        settings: PlaybackSettings {
+                            mode: PlaybackMode::Remove,
+                            // volume: Volume::new(0.4),
+                            ..default()
+                        },
+                    },
                     GameWindow,
                 ));
             }
@@ -377,6 +385,14 @@ fn cast_spell(
                         gust_duration.mul_f32(1.0 / 21.0),
                         TimerMode::Repeating,
                     )),
+                    AudioBundle {
+                        source: asset_server.load("effects/wind_spell.wav"),
+                        settings: PlaybackSettings {
+                            mode: PlaybackMode::Remove,
+                            volume: Volume::new(0.4),
+                            ..default()
+                        },
+                    },
                     GameWindow,
                 ));
             }
