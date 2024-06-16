@@ -345,14 +345,14 @@ fn cast_spell(
                 let layout = texture_atlas_layouts.add(layout_not_fr);
                 let gust_duration = Duration::from_secs(2);
 
-                let direction = *last_mouse_down - ingame_position;
+                let direction = ingame_position - *last_mouse_down;
 
                 commands.spawn((
                     SpriteSheetBundle {
                         transform: Transform {
                             translation: last_mouse_down.extend(3.0),
                             scale: Vec3::new(4.0, 4.0, 1.0),
-                            rotation: Quat::from_rotation_z(direction.y.atan2(direction.x) + FRAC_PI_2),
+                            rotation: Quat::from_rotation_z(direction.y.atan2(direction.x) - FRAC_PI_2),
                         },
                         sprite: Sprite { anchor: Anchor::BottomCenter, ..default() },
                         texture: asset_server.load("Gust.png"),
@@ -429,14 +429,21 @@ fn animate_and_despawn_gust(
         &mut WindGust,
         &mut TextureAtlas,
         &mut AnimationTimer,
+        &mut Transform,
     )>,
     time: Res<Time>,
 ) {
-    for (entity, mut gust, mut atlas, mut animation) in query.iter_mut() {
+    for (entity, mut gust, mut atlas, mut animation, mut transform) in query.iter_mut() {
         gust.timer.tick(time.delta());
         if gust.timer.finished() {
             commands.entity(entity).despawn_recursive();
         }
+
+        // units/s
+        const WIND_SPEED: f32 = 0.5;
+        let direction = gust.direction;
+        gust.position += direction * WIND_SPEED * time.delta_seconds();
+        transform.translation = gust.position.extend(transform.translation.z);
 
         animation.tick(time.delta());
         if animation.just_finished() {
