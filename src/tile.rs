@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 pub enum Tile {
     #[default]
     Ground,
+    Chest,
     Grass,
     Spike,
     Hole,
@@ -18,6 +19,7 @@ pub fn make_tile(tile: Tile, position: IVec2, commands: &mut Commands, asset_ser
         Tile::Spike => "Spikes.png",
         Tile::Hole => "Pit.png",
         Tile::Pole => "WoodPole.png",
+        Tile::Chest => "Chest.png",
         _ => "test.png",
     });
     commands.spawn((
