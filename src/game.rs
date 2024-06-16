@@ -361,7 +361,7 @@ fn cast_spell(
                     },
                     WindGust {
                         position: *last_mouse_down,
-                        direction,
+                        direction: direction.normalize(),
                         timer: Timer::new(gust_duration, TimerMode::Once),
                     },
                     AnimationTimer(Timer::new(

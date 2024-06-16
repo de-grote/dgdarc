@@ -6,7 +6,7 @@ use bevy::{prelude::*, sprite::Anchor};
 use rand::prelude::random;
 use serde::{Deserialize, Serialize};
 
-use super::{AnimationTimer, FireWall, GameWindow, HealingCircle};
+use super::{AnimationTimer, FireWall, GameWindow, HealingCircle, WindGust};
 use crate::tile::{world_to_grid, Tile};
 use crate::{EndGameEvent, LevelScene};
 
@@ -136,6 +136,7 @@ pub fn move_heros(
     )>,
     fires: Query<&FireWall>,
     healing: Query<&HealingCircle>,
+    winds: Query<&WindGust>,
     scene: Res<LevelScene>,
     mut event_writer: EventWriter<EndGameEvent>,
 ) {
@@ -155,45 +156,74 @@ pub fn move_heros(
                 .distance(hero.position)
                 .total_cmp(&y.position.distance(hero.position))
         });
-        let direction = match clostest_fire {
-            Some(fire) => {
-                let distance = fire.position - hero.position;
-                let distance_len = distance.length();
-                if distance_len <= 55.0 {
-                    hero.health_bar.current_health -=
-                        (55.0 - distance.length()) * time.delta_seconds();
-                }
-                if distance_len <= 60.0 {
-                    -distance
-                } else if distance_len <= 70.0 {
-                    let new_dir_a = Vec2 {
-                        x: distance.y,
-                        y: -distance.x,
-                    };
-                    let new_dir_b = Vec2 {
-                        x: -distance.y,
-                        y: distance.x,
-                    };
-                    let angle_a = new_dir_a.angle_between(direction).abs();
-                    let angle_b = new_dir_b.angle_between(direction).abs();
-                    if angle_a < FRAC_PI_2 || angle_b < FRAC_PI_2 {
-                        if hero.rand <= 128 {
-                            new_dir_a.normalize() * direction.length()
-                        } else {
-                            new_dir_b.normalize() * direction.length()
-                        }
-                    } else {
-                        direction
-                    }
-                } else {
-                    if distance_len >= 100.0 {
-                        hero.rand = random()
-                    }
-                    direction
-                }
+        // fire damage
+        if let Some(fire) = clostest_fire {
+            let distance = fire.position - hero.position;
+            let distance_len = distance.length();
+            if distance_len <= 55.0 {
+                hero.health_bar.current_health -= (55.0 - distance.length()) * time.delta_seconds();
             }
-            None => direction,
+        }
+
+        let new_direction = winds.iter().find_map(|wind| {
+            let side_direction = Vec2::new(-wind.direction.y, wind.direction.x);
+            let pos_diff = hero.position - wind.position;
+
+            let local_pos = Vec2::new(pos_diff.dot(side_direction), pos_diff.dot(wind.direction));
+
+            const WIND_WIDTH: f32 = 40.0;
+            const WIND_LENGTH: f32 = 100.0;
+
+            if local_pos.x.abs() <= WIND_WIDTH && local_pos.y >= 0.0 && local_pos.y <= WIND_LENGTH {
+                info!("hit");
+                Some(wind.direction * hero.speed * 2.0)
+            } else {
+                None
+            }
+        });
+        let (use_old_direction_to_flip, new_direction) = match new_direction {
+            Some(direction) => (true, direction),
+            None => (
+                false,
+                match clostest_fire {
+                    Some(fire) => {
+                        let distance = fire.position - hero.position;
+                        let distance_len = distance.length();
+
+                        if distance_len <= 60.0 {
+                            -distance
+                        } else if distance_len <= 70.0 {
+                            let new_dir_a = Vec2 {
+                                x: distance.y,
+                                y: -distance.x,
+                            };
+                            let new_dir_b = Vec2 {
+                                x: -distance.y,
+                                y: distance.x,
+                            };
+                            let angle_a = new_dir_a.angle_between(direction).abs();
+                            let angle_b = new_dir_b.angle_between(direction).abs();
+                            if angle_a < FRAC_PI_2 || angle_b < FRAC_PI_2 {
+                                if hero.rand <= 128 {
+                                    new_dir_a.normalize() * direction.length()
+                                } else {
+                                    new_dir_b.normalize() * direction.length()
+                                }
+                            } else {
+                                direction
+                            }
+                        } else {
+                            if distance_len >= 100.0 {
+                                hero.rand = random()
+                            }
+                            direction
+                        }
+                    }
+                    None => direction,
+                },
+            ),
         };
+
         // healing
         for circle in healing.iter() {
             let distance = circle.position.distance(hero.position);
@@ -220,10 +250,14 @@ pub fn move_heros(
         }
 
         // Flip sprite if we go to the right
-        sprite.flip_x = direction.x.is_sign_negative();
+        sprite.flip_x = if use_old_direction_to_flip {
+            direction.x.is_sign_negative()
+        } else {
+            new_direction.x.is_sign_negative()
+        };
 
         // Finish when close to target
-        if direction.length() < hero.speed * time.delta_seconds() {
+        if new_direction.length() < hero.speed * time.delta_seconds() {
             hero.position = hero.target();
             hero.current_target += 1;
             if hero.current_target == hero.targets.len() {
@@ -232,7 +266,7 @@ pub fn move_heros(
         } else {
             // Movement
             let speed = hero.speed;
-            hero.position += direction.normalize() * speed * time.delta_seconds();
+            hero.position += new_direction.normalize() * speed * time.delta_seconds();
         }
         transform.translation = hero.position.extend(1.0);
 
