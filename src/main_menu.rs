@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{despawn_screen, GameState};
+use crate::{despawn_screen, GameState, BGM};
 
 pub struct MenuPlugin;
 
@@ -19,7 +19,11 @@ pub struct MenuWindow;
 #[derive(Component)]
 struct StartButton;
 
-fn setup(mut commands: Commands) {
+fn setup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut bgm_query: Query<(&mut BGM, Entity)>,
+) {
     commands.spawn((
         Camera2dBundle {
             camera: Camera {
@@ -30,6 +34,16 @@ fn setup(mut commands: Commands) {
         },
         MenuWindow,
     ));
+
+    if let Ok((mut bgm, entity)) = bgm_query.get_single_mut() {
+        if bgm.0 != "music/Main_menu.wav" {
+            commands
+                .entity(entity)
+                .remove::<AudioSink>()
+                .insert(asset_server.load::<AudioSource>("music/Main_menu.wav"));
+            bgm.0 = "music/Main_menu.wav".to_string();
+        }
+    }
 
     commands.spawn((
         TextBundle {

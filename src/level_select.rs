@@ -2,7 +2,7 @@ use std::sync::OnceLock;
 
 use bevy::prelude::*;
 
-use crate::{despawn_screen, GameState, LevelScene};
+use crate::{despawn_screen, GameState, LevelScene, BGM};
 
 pub struct LevelSelectPlugin;
 
@@ -33,7 +33,12 @@ pub struct LevelsWon(pub [bool; NUMBER_OF_LEVELS]);
 #[derive(Component)]
 pub struct ReenterLevel(pub usize);
 
-fn setup(mut commands: Commands, levels_won: Res<LevelsWon>) {
+fn setup(
+    mut commands: Commands,
+    levels_won: Res<LevelsWon>,
+    mut bgm_query: Query<(&mut BGM, Entity)>,
+    asset_server: Res<AssetServer>,
+) {
     commands.spawn((
         Camera2dBundle {
             camera: Camera {
@@ -44,6 +49,16 @@ fn setup(mut commands: Commands, levels_won: Res<LevelsWon>) {
         },
         LevelSelectWindow,
     ));
+
+    if let Ok((mut bgm, entity)) = bgm_query.get_single_mut() {
+        if bgm.0 != "music/Main_menu.wav" {
+            commands
+                .entity(entity)
+                .remove::<AudioSink>()
+                .insert(asset_server.load::<AudioSource>("music/Main_menu.wav"));
+            bgm.0 = "music/Main_menu.wav".to_string();
+        }
+    }
 
     commands
         .spawn((

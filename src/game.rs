@@ -7,7 +7,7 @@ use bevy::{prelude::*, window::PrimaryWindow};
 
 use crate::level_select::{LevelSelectWindow, LevelsWon, ReenterLevel};
 use crate::tile::make_tile;
-use crate::{despawn_screen, EndGameEvent, GameState, LevelScene};
+use crate::{despawn_screen, EndGameEvent, GameState, LevelScene, BGM};
 use hero::*;
 
 pub mod hero;
@@ -101,6 +101,7 @@ fn setup(
     scene: Res<LevelScene>,
     selected_spell: ResMut<Spell>,
     window: Query<&Window, With<PrimaryWindow>>,
+    mut bgm_query: Query<(&mut BGM, Entity)>,
 ) {
     commands.spawn((
         Camera2dBundle {
@@ -145,6 +146,17 @@ fn setup(
         },
         GameWindow,
     ));
+
+    if let Ok((mut bgm, entity)) = bgm_query.get_single_mut() {
+        let music = format!("music/{}", scene.music);
+        if bgm.0 != music {
+            commands
+                .entity(entity)
+                .remove::<AudioSink>()
+                .insert(asset_server.load::<AudioSource>(&music));
+            bgm.0 = music;
+        }
+    }
 
     commands
         .spawn((

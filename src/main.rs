@@ -7,6 +7,7 @@ pub mod main_menu;
 pub mod tile;
 
 use crate::tile::Tile;
+use bevy::audio::PlaybackMode;
 use bevy::window::PresentMode;
 use bevy::window::WindowMode;
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*};
@@ -32,6 +33,7 @@ fn main() {
         .init_state::<GameState>()
         .init_resource::<LevelScene>()
         .add_event::<EndGameEvent>()
+        .add_systems(Startup, start_bgm)
         .add_plugins((
             main_menu::MenuPlugin,
             level_select::LevelSelectPlugin,
@@ -49,10 +51,27 @@ pub enum GameState {
     Gaming,
 }
 
+#[derive(Resource, Component)]
+pub struct BGM(String);
+
+fn start_bgm(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn((
+        AudioBundle {
+            source: asset_server.load("music/Main_menu.wav"),
+            settings: PlaybackSettings {
+                mode: PlaybackMode::Loop,
+                ..default()
+            },
+        },
+        BGM("music/Main_menu.wav".to_string()),
+    ));
+}
+
 #[derive(Resource, Debug, Default, Serialize, Deserialize, Clone)]
 pub struct LevelScene {
     pub level_name: String,
     pub background_texture: String,
+    pub music: String,
     pub heros: Vec<Hero>,
     pub points_of_interest: Vec<(IVec2, Tile)>,
     #[serde(skip)]
