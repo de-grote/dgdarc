@@ -6,7 +6,7 @@ use bevy::{prelude::*, sprite::Anchor};
 use rand::prelude::random;
 use serde::{Deserialize, Serialize};
 
-use super::{AnimationTimer, FireWall, GameWindow};
+use super::{AnimationTimer, FireWall, GameWindow, HealingCircle};
 use crate::tile::{world_to_grid, Tile};
 use crate::{EndGameEvent, LevelScene};
 
@@ -135,6 +135,7 @@ pub fn move_heros(
         &mut AnimationTimer,
     )>,
     fires: Query<&FireWall>,
+    healing: Query<&HealingCircle>,
     scene: Res<LevelScene>,
     mut event_writer: EventWriter<EndGameEvent>,
 ) {
@@ -193,6 +194,17 @@ pub fn move_heros(
             }
             None => direction,
         };
+        // healing
+        for circle in healing.iter() {
+            let distance = circle.position.distance(hero.position);
+            if distance <= 60.0 {
+                // HP/s
+                const HEALING_AMOUNT: f32 = 5.0;
+                hero.health_bar.current_health = (hero.health_bar.current_health
+                    + HEALING_AMOUNT * time.delta_seconds())
+                .min(hero.health_bar.max_health);
+            }
+        }
 
         // POI
         let grid_pos = world_to_grid(hero.position);

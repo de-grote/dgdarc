@@ -24,6 +24,7 @@ impl Plugin for GamePlugin {
                     select_spell_keybind.run_if(in_state(GameState::Gaming)),
                     highlight_selected_spell.run_if(in_state(GameState::Gaming)),
                     animate_and_despawn_fire.run_if(in_state(GameState::Gaming)),
+                    animate_and_despawn_healing.run_if(in_state(GameState::Gaming)),
                     cast_spell.run_if(
                         in_state(GameState::Gaming).and_then(in_state(GameRunning::Running)),
                     ),
@@ -69,6 +70,12 @@ pub enum GameRunning {
 pub struct FireWall {
     pub position: Vec2,
     pub ttl: Timer,
+}
+
+#[derive(Component, Clone, Debug, Default)]
+pub struct HealingCircle {
+    position: Vec2,
+    timer: Timer,
 }
 
 #[derive(Component, Deref, DerefMut)]
@@ -224,6 +231,7 @@ fn cast_spell(
     asset_server: Res<AssetServer>,
     camera_query: Query<(&Camera, &GlobalTransform)>,
     interaction_query: Query<&Interaction>,
+    healing_spell: Query<&HealingCircle>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let Some(mouse_position) = window.single().cursor_position() else {
@@ -271,7 +279,33 @@ fn cast_spell(
                 ));
             }
         }
-        Spell::HealthBoost => {}
+        Spell::HealthBoost => {
+            if healing_spell.is_empty() && pressed() {
+                let layout_not_fr =
+                    TextureAtlasLayout::from_grid(Vec2::new(32.0, 32.0), 14, 1, None, None);
+                let layout = texture_atlas_layouts.add(layout_not_fr);
+                let healing_duration = Duration::from_secs(4);
+
+                commands.spawn((
+                    SpriteSheetBundle {
+                        transform: Transform {
+                            translation: ingame_position.extend(0.6),
+                            scale: Vec3::new(4.0, 4.0, 1.0),
+                            ..default()
+                        },
+                        texture: asset_server.load("HealingCircle.png"),
+                        atlas: TextureAtlas { layout, index: 0 },
+                        ..default()
+                    },
+                    HealingCircle {
+                        position: ingame_position,
+                        timer: Timer::new(healing_duration, TimerMode::Once),
+                    },
+                    AnimationTimer(Timer::new(healing_duration.mul_f32(1.0 / 14.0), TimerMode::Repeating)),
+                    GameWindow,
+                ));
+            }
+        }
     };
 }
 
@@ -295,6 +329,29 @@ fn animate_and_despawn_fire(
         animation.tick(time.delta().mul_f32(ANIMATION_SPEED));
         if animation.just_finished() {
             atlas.index = if atlas.index == 9 { 4 } else { atlas.index + 1 }
+        }
+    }
+}
+
+fn animate_and_despawn_healing(
+    mut commands: Commands,
+    mut query: Query<(
+        Entity,
+        &mut HealingCircle,
+        &mut TextureAtlas,
+        &mut AnimationTimer,
+    )>,
+    time: Res<Time>,
+) {
+    for (entity, mut healing_circle, mut atlas, mut animation) in query.iter_mut() {
+        healing_circle.timer.tick(time.delta());
+        if healing_circle.timer.finished() {
+            commands.entity(entity).despawn_recursive();
+        }
+
+        animation.tick(time.delta());
+        if animation.just_finished() {
+            atlas.index += 1;
         }
     }
 }
