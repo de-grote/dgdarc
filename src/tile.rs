@@ -9,6 +9,7 @@ pub enum Tile {
     Grass,
     Spike,
     Hole,
+    Pole,
 }
 
 pub fn make_tile(tile: Tile, position: IVec2, commands: &mut Commands, asset_server: &AssetServer) {
@@ -16,6 +17,7 @@ pub fn make_tile(tile: Tile, position: IVec2, commands: &mut Commands, asset_ser
         Tile::Grass => "EvilGrass.png",
         Tile::Spike => "Spikes.png",
         Tile::Hole => "Pit.png",
+        Tile::Pole => "WoodPole.png",
         _ => "test.png",
     });
     commands.spawn((
