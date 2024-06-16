@@ -210,12 +210,14 @@ const fn level(id: usize) -> &'static str {
     match id {
         1 => LEVEL1,
         2 => LEVEL2,
+        3 => LEVEL3,
         _ => unimplemented!(),
     }
 }
 
 static LEVEL_DATA: OnceLock<Vec<LevelScene>> = OnceLock::new();
 
-const NUMBER_OF_LEVELS: usize = 2;
+const NUMBER_OF_LEVELS: usize = 3;
 const LEVEL1: &str = include_str!("../levels/level1.toml");
 const LEVEL2: &str = include_str!("../levels/level2.toml");
+const LEVEL3: &str = include_str!("../levels/level3.toml");
