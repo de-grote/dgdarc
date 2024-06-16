@@ -1,6 +1,6 @@
 level_name = "The beginning"
 background_texture = "EvilGrass.png"
-music = "battle1.wav"
+music = "Battle_2.wav"
 points_of_interest = [[[1, 1], "Ground"], [[64, 64], "Spike"], [[64, -320], "Spike"], [[-64, -576], "Spike"], [[-384, 0], "Spike"], [[-384, -384], "Spike"], [[-576, -64], "Spike"], [[-768, 64], "Spike"], [[-640, -256], "Spike"], [[-832, -256], "Spike"], [[-576, 320], "Spike"], [[-768, 448], "Spike"], [[-512, 640], "Spike"], [[-640, -704], "Spike"], [[-256, 448], "Spike"], [[-256, 832], "Spike"], [[192, 832], "Spike"], [[192, 384], "Spike"], [[448, 896], "Spike"], [[448, 640], "Spike"], [[448, -896], "Spike"], [[512, -576], "Spike"], [[640, -192], "Spike"], [[640, 64], "Spike"], [[704, 384], "Spike"], [[704, 704], "Hole"], [[832, -768], "Hole"], [[832, -576], "Hole"], [[256, -512], "Hole"], [[320, -128], "Hole"], [[384, 256], "Hole"], [[0, 576], "Hole"], [[-192, -192], "Hole"], [[-128, -768], "Hole"], [[-512, -832], "Hole"], [[-704, 448], "Hole"], [[-384, 128], "Hole"], [[-768, 704], "Hole"]]
 
 [[heros]]
