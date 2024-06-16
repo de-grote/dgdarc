@@ -8,6 +8,7 @@ pub mod main_menu;
 pub mod tile;
 
 use crate::tile::Tile;
+use bevy::asset::AssetMetaCheck;
 use bevy::audio::PlaybackMode;
 use bevy::window::PresentMode;
 use bevy::window::WindowMode;
@@ -18,6 +19,7 @@ use std::collections::HashMap;
 
 fn main() {
     App::new()
+        .insert_resource(AssetMetaCheck::Never)
         .add_plugins(
             DefaultPlugins
                 .set(ImagePlugin::default_nearest())
