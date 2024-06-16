@@ -1,5 +1,5 @@
 EPIC GAME (name tbd)
-made by Chris Groot, Arend Bos and Lars Plugge for the dgdarc gamejam.
+Made by Chris Groot, Arend Bos and Lars Plugge for the dgdarc gamejam.
 
 Lore:
 You are an evil wizard, and some heroes are trying to steal your enemies' treasures.

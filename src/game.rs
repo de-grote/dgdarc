@@ -508,7 +508,7 @@ fn move_camera(
         }
         let mut transform = camera_query.single_mut();
         const SCROLL_SPEED: f32 = 0.1;
-        transform.scale = (transform.scale.xy() - (event.x + event.y) * SCROLL_SPEED)
+        transform.scale = (transform.scale.xy() - (((event.x + event.y) * SCROLL_SPEED).clamp(-1.0, 1.0)))
             .max(Vec2::splat(0.3))
             .extend(1.0);
     }
