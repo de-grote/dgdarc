@@ -2,7 +2,7 @@ use crate::game::GameWindow;
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Resource, Debug, Default, Serialize, Deserialize, Component, Copy, Clone)]
+#[derive(Resource, Debug, Default, Serialize, Deserialize, Component, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub enum Tile {
     #[default]
     Ground,

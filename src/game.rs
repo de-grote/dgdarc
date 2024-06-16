@@ -525,6 +525,8 @@ fn register_win(
     level: Res<LevelScene>,
     mut levels_won: ResMut<LevelsWon>,
     mut state: ResMut<NextState<GameRunning>>,
+    asset_server: Res<AssetServer>,
+    mut bgm_query: Query<(&mut BGM, Entity)>,
 ) {
     for event in event_reader.read() {
         let style = Style {
@@ -533,6 +535,7 @@ fn register_win(
             justify_self: JustifySelf::Center,
             ..default()
         };
+        let music;
         if let EndGameEvent::Win = event {
             levels_won[level.level - 1] = true;
             commands.spawn((
@@ -550,6 +553,7 @@ fn register_win(
                 },
                 GameWindow,
             ));
+            music = "music/Victory.wav";
         } else {
             commands.spawn((
                 TextBundle {
@@ -567,6 +571,16 @@ fn register_win(
                 },
                 GameWindow,
             ));
+            music = "music/Loss.wav";
+        }
+        if let Ok((mut bgm, entity)) = bgm_query.get_single_mut() {
+            if bgm.0 != music {
+                commands
+                    .entity(entity)
+                    .remove::<AudioSink>()
+                    .insert(asset_server.load::<AudioSource>(music));
+                bgm.0 = music.to_string();
+            }
         }
         commands
             .spawn((

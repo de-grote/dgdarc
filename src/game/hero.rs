@@ -7,7 +7,7 @@ use rand::prelude::random;
 use serde::{Deserialize, Serialize};
 
 use super::{AnimationTimer, FireWall, GameWindow, HealingCircle, WindGust};
-use crate::tile::{world_to_grid, Tile};
+use crate::tile::{world_to_grid, Tile, grid_to_world};
 use crate::{EndGameEvent, LevelScene};
 
 #[derive(Default, Debug, Clone, Component, Serialize, Deserialize)]
@@ -180,7 +180,7 @@ pub fn move_heros(
                 None
             }
         });
-        let (use_old_direction_to_flip, new_direction) = match new_direction {
+        let (use_old_direction_to_flip,mut new_direction) = match new_direction {
             Some(direction) => (true, direction),
             None => (
                 false,
@@ -245,6 +245,14 @@ pub fn move_heros(
                     _ => (),
                 };
                 hero.seen_poi.insert(grid_pos);
+            }
+        }
+        if let Some(tile) = scene.points_of_interest_map.get(&grid_pos) {
+            if tile == &Tile::Pole {
+                new_direction = hero.position - grid_to_world(grid_pos);
+                if new_direction == Vec2::ZERO {
+                    new_direction = Vec2::Y;
+                }
             }
         }
 
