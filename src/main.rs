@@ -2,6 +2,7 @@
 #![allow(clippy::type_complexity)]
 
 pub mod game;
+pub mod info_screen;
 pub mod level_select;
 pub mod main_menu;
 pub mod tile;
@@ -36,6 +37,7 @@ fn main() {
         .add_systems(Startup, start_bgm)
         .add_plugins((
             main_menu::MenuPlugin,
+            info_screen::InfoPlugin,
             level_select::LevelSelectPlugin,
             game::GamePlugin,
             FrameTimeDiagnosticsPlugin,
@@ -47,6 +49,7 @@ fn main() {
 pub enum GameState {
     #[default]
     MainMenu,
+    InfoScreen,
     LevelSelect,
     Gaming,
 }
