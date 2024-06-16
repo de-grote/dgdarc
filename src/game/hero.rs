@@ -199,7 +199,7 @@ pub fn move_heros(
             let distance = circle.position.distance(hero.position);
             if distance <= 60.0 {
                 // HP/s
-                const HEALING_AMOUNT: f32 = 5.0;
+                const HEALING_AMOUNT: f32 = 8.0;
                 hero.health_bar.current_health = (hero.health_bar.current_health
                     + HEALING_AMOUNT * time.delta_seconds())
                 .min(hero.health_bar.max_health);

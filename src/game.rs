@@ -1,6 +1,8 @@
+use std::f32::consts::FRAC_PI_2;
 use std::time::Duration;
 
 use bevy::input::mouse::MouseWheel;
+use bevy::sprite::Anchor;
 use bevy::{prelude::*, window::PrimaryWindow};
 
 use crate::level_select::{LevelSelectWindow, LevelsWon, ReenterLevel};
@@ -25,15 +27,18 @@ impl Plugin for GamePlugin {
                     highlight_selected_spell.run_if(in_state(GameState::Gaming)),
                     animate_and_despawn_fire.run_if(in_state(GameState::Gaming)),
                     animate_and_despawn_healing.run_if(in_state(GameState::Gaming)),
+                    animate_and_despawn_gust.run_if(in_state(GameState::Gaming)),
                     cast_spell.run_if(
                         in_state(GameState::Gaming).and_then(in_state(GameRunning::Running)),
                     ),
                     move_heros.run_if(
                         in_state(GameState::Gaming).and_then(in_state(GameRunning::Running)),
                     ),
-                    update_health_bars.run_if(
-                        in_state(GameState::Gaming).and_then(in_state(GameRunning::Running)),
-                    ),
+                    update_health_bars
+                        .run_if(
+                            in_state(GameState::Gaming).and_then(in_state(GameRunning::Running)),
+                        )
+                        .after(move_heros),
                     move_camera.run_if(
                         in_state(GameState::Gaming).and_then(in_state(GameRunning::Running)),
                     ),
@@ -57,6 +62,7 @@ pub enum Spell {
     None,
     FireWall,
     HealthBoost,
+    WindGust,
 }
 
 #[derive(States, Default, Debug, Hash, PartialEq, Eq, Clone, Copy)]
@@ -75,6 +81,13 @@ pub struct FireWall {
 #[derive(Component, Clone, Debug, Default)]
 pub struct HealingCircle {
     position: Vec2,
+    timer: Timer,
+}
+
+#[derive(Component, Clone, Debug, Default)]
+pub struct WindGust {
+    position: Vec2,
+    direction: Vec2,
     timer: Timer,
 }
 
@@ -148,7 +161,7 @@ fn setup(
             GameWindow,
         ))
         .with_children(|parent| {
-            let spells = [Spell::FireWall, Spell::HealthBoost];
+            let spells = [Spell::FireWall, Spell::HealthBoost, Spell::WindGust];
             for spell in spells {
                 parent.spawn((
                     ButtonBundle {
@@ -164,6 +177,7 @@ fn setup(
                         image: UiImage::new(asset_server.load(match spell {
                             Spell::FireWall => "FireSpell.png",
                             Spell::HealthBoost => "HealingSpell.png",
+                            Spell::WindGust => "AirSpell.png",
                             Spell::None => unreachable!(),
                         })),
                         ..default()
@@ -189,18 +203,19 @@ fn select_spell_button(query: Query<(&Interaction, &Spell)>, mut selected_spell:
 }
 
 fn select_spell_keybind(input: Res<ButtonInput<KeyCode>>, mut selected_spell: ResMut<Spell>) {
+    let mut select_spell = |spell| {
+        *selected_spell = if selected_spell.as_ref() == &spell {
+            Spell::None
+        } else {
+            spell
+        }
+    };
     if input.any_just_pressed([KeyCode::Digit1, KeyCode::Numpad1]) {
-        *selected_spell = if selected_spell.as_ref() == &Spell::FireWall {
-            Spell::None
-        } else {
-            Spell::FireWall
-        }
+        select_spell(Spell::FireWall);
     } else if input.any_just_pressed([KeyCode::Digit2, KeyCode::Numpad2]) {
-        *selected_spell = if selected_spell.as_ref() == &Spell::HealthBoost {
-            Spell::None
-        } else {
-            Spell::HealthBoost
-        }
+        select_spell(Spell::HealthBoost);
+    } else if input.any_just_pressed([KeyCode::Digit3, KeyCode::Numpad3]) {
+        select_spell(Spell::WindGust);
     }
 }
 
@@ -232,6 +247,7 @@ fn cast_spell(
     camera_query: Query<(&Camera, &GlobalTransform)>,
     interaction_query: Query<&Interaction>,
     healing_spell: Query<&HealingCircle>,
+    mut last_mouse_down: Local<Vec2>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let Some(mouse_position) = window.single().cursor_position() else {
@@ -242,16 +258,17 @@ fn cast_spell(
     else {
         return;
     };
-    let pressed = || {
-        input.pressed(MouseButton::Left)
-            && !interaction_query
-                .iter()
-                .any(|interaction| *interaction == Interaction::Pressed)
+    let mouse_on_game = interaction_query
+        .iter()
+        .all(|interaction| *interaction == Interaction::None);
+    let pressed = input.pressed(MouseButton::Left) && mouse_on_game;
+    if input.just_pressed(MouseButton::Left) && mouse_on_game {
+        *last_mouse_down = ingame_position
     };
     match selected_spell.as_ref() {
         Spell::None => {}
         Spell::FireWall => {
-            if pressed()
+            if pressed
                 && !fire_walls
                     .iter()
                     .any(|wall| wall.position.distance(ingame_position) < 40.0)
@@ -280,7 +297,7 @@ fn cast_spell(
             }
         }
         Spell::HealthBoost => {
-            if healing_spell.is_empty() && pressed() {
+            if healing_spell.is_empty() && pressed {
                 let layout_not_fr =
                     TextureAtlasLayout::from_grid(Vec2::new(32.0, 32.0), 14, 1, None, None);
                 let layout = texture_atlas_layouts.add(layout_not_fr);
@@ -301,7 +318,44 @@ fn cast_spell(
                         position: ingame_position,
                         timer: Timer::new(healing_duration, TimerMode::Once),
                     },
-                    AnimationTimer(Timer::new(healing_duration.mul_f32(1.0 / 14.0), TimerMode::Repeating)),
+                    AnimationTimer(Timer::new(
+                        healing_duration.mul_f32(1.0 / 14.0),
+                        TimerMode::Repeating,
+                    )),
+                    GameWindow,
+                ));
+            }
+        }
+        Spell::WindGust => {
+            if input.just_released(MouseButton::Left) && mouse_on_game {
+                let layout_not_fr =
+                    TextureAtlasLayout::from_grid(Vec2::new(16.0, 32.0), 21, 1, None, None);
+                let layout = texture_atlas_layouts.add(layout_not_fr);
+                let gust_duration = Duration::from_secs(2);
+
+                let direction = *last_mouse_down - ingame_position;
+
+                commands.spawn((
+                    SpriteSheetBundle {
+                        transform: Transform {
+                            translation: last_mouse_down.extend(3.0),
+                            scale: Vec3::new(4.0, 4.0, 1.0),
+                            rotation: Quat::from_rotation_z(direction.y.atan2(direction.x) + FRAC_PI_2),
+                        },
+                        sprite: Sprite { anchor: Anchor::BottomCenter, ..default() },
+                        texture: asset_server.load("Gust.png"),
+                        atlas: TextureAtlas { layout, index: 0 },
+                        ..default()
+                    },
+                    WindGust {
+                        position: *last_mouse_down,
+                        direction,
+                        timer: Timer::new(gust_duration, TimerMode::Once),
+                    },
+                    AnimationTimer(Timer::new(
+                        gust_duration.mul_f32(1.0 / 21.0),
+                        TimerMode::Repeating,
+                    )),
                     GameWindow,
                 ));
             }
@@ -346,6 +400,29 @@ fn animate_and_despawn_healing(
     for (entity, mut healing_circle, mut atlas, mut animation) in query.iter_mut() {
         healing_circle.timer.tick(time.delta());
         if healing_circle.timer.finished() {
+            commands.entity(entity).despawn_recursive();
+        }
+
+        animation.tick(time.delta());
+        if animation.just_finished() {
+            atlas.index += 1;
+        }
+    }
+}
+
+fn animate_and_despawn_gust(
+    mut commands: Commands,
+    mut query: Query<(
+        Entity,
+        &mut WindGust,
+        &mut TextureAtlas,
+        &mut AnimationTimer,
+    )>,
+    time: Res<Time>,
+) {
+    for (entity, mut gust, mut atlas, mut animation) in query.iter_mut() {
+        gust.timer.tick(time.delta());
+        if gust.timer.finished() {
             commands.entity(entity).despawn_recursive();
         }
 
