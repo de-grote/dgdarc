@@ -180,7 +180,7 @@ pub fn move_heros(
                 None
             }
         });
-        let (use_old_direction_to_flip,mut new_direction) = match new_direction {
+        let (mut use_old_direction_to_flip,mut new_direction) = match new_direction {
             Some(direction) => (true, direction),
             None => (
                 false,
@@ -253,6 +253,7 @@ pub fn move_heros(
                 if new_direction == Vec2::ZERO {
                     new_direction = Vec2::Y;
                 }
+                use_old_direction_to_flip = true;
             }
         }
 

@@ -3,9 +3,13 @@ made by Chris Groot, Arend Bos and Lars Plugge for the dgdarc gamejam.
 
 Lore:
 You are an evil wizard, and some heroes are trying to steal your enemies' treasures.
-Sadly for you there heroes are stupid, so you decide to help them out,
-The only problem is that you have only mastered evil spells, and aren't good with good magic.
+Sadly for you there heroes are stupid, so you decide to help them out, the only problem is that you have only mastered evil spells, and aren't good with good magic.
 
 Controls:
-Select a spell by pressing the buttons on the bottom left, or enter a number to hotkey to that spell
-Use your mouse to summon spells.
+Select a spell by pressing the buttons on the bottom left, or enter a number to hotkey to that spell.
+Use left click to summon spells.
+Use right click to move the screen.
+Use scroll wheel to zoom.
+
+Extra Info:
+This game was made in 2 days following the theme of 'bad is good' and was made in the bevy game engine.
