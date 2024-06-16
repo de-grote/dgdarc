@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use bevy::input::mouse::MouseWheel;
 use bevy::{prelude::*, window::PrimaryWindow};
+use bevy::audio::{PlaybackMode, Volume};
 
 use crate::level_select::{LevelSelectWindow, LevelsWon, ReenterLevel};
 use crate::tile::make_tile;
@@ -285,6 +286,14 @@ fn cast_spell(
                     FireWall {
                         position: ingame_position,
                         ttl: Timer::from_seconds(5.0, TimerMode::Once),
+                    },
+                    AudioBundle {
+                        source: asset_server.load("effects/firewall.wav"),
+                        settings: PlaybackSettings {
+                            mode: PlaybackMode::Remove,
+                            volume: Volume::new(0.4),
+                            ..default()
+                        },
                     },
                     AnimationTimer(Timer::new(Duration::from_millis(100), TimerMode::Repeating)),
                     GameWindow,
