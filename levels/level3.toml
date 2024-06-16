@@ -1,6 +1,6 @@
 level_name = "The Third"
 background_texture = "EvilGrass.png"
-music = "Battle_3.wav"
+music = "Battle_3.ogg"
 points_of_interest = [[[10, 1], "Chest"], [[0, -1], "Pole"], [[1, -1], "Pole"], [[2, -1], "Pole"], [[3, -1], "Pole"], [[4, -1], "Pole"], [[5, -1], "Pole"], [[6, -1], "Pole"], [[7, -1], "Pole"], [[8, -1], "Pole"], [[9, -1], "Pole"], [[10, -1], "Pole"], [[0, 3], "Pole"], [[1, 3], "Pole"], [[2, 3], "Pole"], [[3, 3], "Pole"], [[4, 3], "Pole"], [[5, 3], "Pole"], [[6, 3], "Pole"], [[7, 3], "Pole"], [[8, 3], "Pole"], [[9, 3], "Pole"], [[10, 3], "Pole"], [[1, 1], "Spike"], [[1, 2], "Spike"], [[3, 1], "Spike"], [[3, 0], "Spike"], [[5, 1], "Spike"], [[5, 2], "Spike"], [[7, 1], "Spike"], [[7, 0], "Spike"]]
 
 [[heros]]

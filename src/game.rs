@@ -1,10 +1,10 @@
 use std::f32::consts::FRAC_PI_2;
 use std::time::Duration;
 
+use bevy::audio::{PlaybackMode, Volume};
 use bevy::input::mouse::MouseWheel;
 use bevy::sprite::Anchor;
 use bevy::{prelude::*, window::PrimaryWindow};
-use bevy::audio::{PlaybackMode, Volume};
 
 use crate::level_select::{LevelSelectWindow, LevelsWon, ReenterLevel};
 use crate::tile::make_tile;
@@ -305,7 +305,7 @@ fn cast_spell(
                         ttl: Timer::from_seconds(5.0, TimerMode::Once),
                     },
                     AudioBundle {
-                        source: asset_server.load("effects/firewall.wav"),
+                        source: asset_server.load("effects/firewall.ogg"),
                         settings: PlaybackSettings {
                             mode: PlaybackMode::Remove,
                             volume: Volume::new(0.4),
@@ -344,7 +344,7 @@ fn cast_spell(
                         TimerMode::Repeating,
                     )),
                     AudioBundle {
-                        source: asset_server.load("effects/healingSpell.wav"),
+                        source: asset_server.load("effects/healingSpell.ogg"),
                         settings: PlaybackSettings {
                             mode: PlaybackMode::Remove,
                             // volume: Volume::new(0.4),
@@ -369,9 +369,14 @@ fn cast_spell(
                         transform: Transform {
                             translation: last_mouse_down.extend(3.0),
                             scale: Vec3::new(4.0, 4.0, 1.0),
-                            rotation: Quat::from_rotation_z(direction.y.atan2(direction.x) - FRAC_PI_2),
+                            rotation: Quat::from_rotation_z(
+                                direction.y.atan2(direction.x) - FRAC_PI_2,
+                            ),
                         },
-                        sprite: Sprite { anchor: Anchor::BottomCenter, ..default() },
+                        sprite: Sprite {
+                            anchor: Anchor::BottomCenter,
+                            ..default()
+                        },
                         texture: asset_server.load("Gust.png"),
                         atlas: TextureAtlas { layout, index: 0 },
                         ..default()
@@ -386,7 +391,7 @@ fn cast_spell(
                         TimerMode::Repeating,
                     )),
                     AudioBundle {
-                        source: asset_server.load("effects/wind_spell.wav"),
+                        source: asset_server.load("effects/wind_spell.ogg"),
                         settings: PlaybackSettings {
                             mode: PlaybackMode::Remove,
                             volume: Volume::new(0.4),
@@ -508,9 +513,10 @@ fn move_camera(
         }
         let mut transform = camera_query.single_mut();
         const SCROLL_SPEED: f32 = 0.1;
-        transform.scale = (transform.scale.xy() - (((event.x + event.y) * SCROLL_SPEED).clamp(-1.0, 1.0)))
-            .max(Vec2::splat(0.3))
-            .extend(1.0);
+        transform.scale = (transform.scale.xy()
+            - (((event.x + event.y) * SCROLL_SPEED).clamp(-1.0, 1.0)))
+        .max(Vec2::splat(0.3))
+        .extend(1.0);
     }
 }
 
@@ -553,7 +559,7 @@ fn register_win(
                 },
                 GameWindow,
             ));
-            music = "music/Victory.wav";
+            music = "music/Victory.ogg";
         } else {
             commands.spawn((
                 TextBundle {
@@ -571,7 +577,7 @@ fn register_win(
                 },
                 GameWindow,
             ));
-            music = "music/Loss.wav";
+            music = "music/Loss.ogg";
         }
         if let Ok((mut bgm, entity)) = bgm_query.get_single_mut() {
             if bgm.0 != music {
@@ -664,4 +670,3 @@ fn wait_to_go_back(
         }
     }
 }
-

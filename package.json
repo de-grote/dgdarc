@@ -5,7 +5,7 @@
     "main": "index.js",
     "scripts": {
         "start": "http-server ./static",
-        "build": "cargo build --release --target wasm32-unknown-unknown && cp -r assets ./static/assets && wasm-bindgen --no-typescript --target web --out-dir ./static/ --out-name \"dgdarc\" ./target/wasm32-unknown-unknown/release/dgdarc.wasm"
+        "build": "cargo build --release --target wasm32-unknown-unknown && cp -r assets ./static/ && wasm-bindgen --no-typescript --target web --out-dir ./static/ --out-name \"dgdarc\" ./target/wasm32-unknown-unknown/release/dgdarc.wasm && wasm-opt -O -ol 100 -s 100 -o static/dgdarc_bg.wasm static/dgdarc_bg.wasm && zip -r game.zip static"
     },
     "keywords": [],
     "author": "",

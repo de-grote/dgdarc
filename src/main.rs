@@ -62,13 +62,13 @@ pub struct BGM(String);
 fn start_bgm(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         AudioBundle {
-            source: asset_server.load("music/Main_menu.wav"),
+            source: asset_server.load("music/Main_menu.ogg"),
             settings: PlaybackSettings {
                 mode: PlaybackMode::Loop,
                 ..default()
             },
         },
-        BGM("music/Main_menu.wav".to_string()),
+        BGM("music/Main_menu.ogg".to_string()),
     ));
 }
 

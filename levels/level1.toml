@@ -1,6 +1,6 @@
 level_name = "The beginning"
 background_texture = "EvilGrass.png"
-music = "Battle_1.wav"
+music = "Battle_1.ogg"
 points_of_interest = [[[5, 3], "Chest"], [[3, 1], "Spike"], [[2, 1], "Pole"], [[4, 1], "Pole"], [[4, 2], "Pole"], [[3, 2], "Hole"]]
 
 [[heros]]
