@@ -4,6 +4,7 @@ use std::time::Duration;
 use bevy::input::mouse::MouseWheel;
 use bevy::sprite::Anchor;
 use bevy::{prelude::*, window::PrimaryWindow};
+use bevy::audio::{PlaybackMode, Volume};
 
 use crate::level_select::{LevelSelectWindow, LevelsWon, ReenterLevel};
 use crate::tile::make_tile;
@@ -303,6 +304,14 @@ fn cast_spell(
                         position: ingame_position,
                         ttl: Timer::from_seconds(5.0, TimerMode::Once),
                     },
+                    AudioBundle {
+                        source: asset_server.load("effects/firewall.wav"),
+                        settings: PlaybackSettings {
+                            mode: PlaybackMode::Remove,
+                            volume: Volume::new(0.4),
+                            ..default()
+                        },
+                    },
                     AnimationTimer(Timer::new(Duration::from_millis(100), TimerMode::Repeating)),
                     GameWindow,
                 ));
@@ -334,6 +343,14 @@ fn cast_spell(
                         healing_duration.mul_f32(1.0 / 14.0),
                         TimerMode::Repeating,
                     )),
+                    AudioBundle {
+                        source: asset_server.load("effects/healingSpell.wav"),
+                        settings: PlaybackSettings {
+                            mode: PlaybackMode::Remove,
+                            // volume: Volume::new(0.4),
+                            ..default()
+                        },
+                    },
                     GameWindow,
                 ));
             }
@@ -368,6 +385,14 @@ fn cast_spell(
                         gust_duration.mul_f32(1.0 / 21.0),
                         TimerMode::Repeating,
                     )),
+                    AudioBundle {
+                        source: asset_server.load("effects/wind_spell.wav"),
+                        settings: PlaybackSettings {
+                            mode: PlaybackMode::Remove,
+                            volume: Volume::new(0.4),
+                            ..default()
+                        },
+                    },
                     GameWindow,
                 ));
             }
