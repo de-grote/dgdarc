@@ -175,7 +175,6 @@ pub fn move_heros(
             const WIND_LENGTH: f32 = 100.0;
 
             if local_pos.x.abs() <= WIND_WIDTH && local_pos.y >= 0.0 && local_pos.y <= WIND_LENGTH {
-                info!("hit");
                 Some(wind.direction * hero.speed * 2.0)
             } else {
                 None
