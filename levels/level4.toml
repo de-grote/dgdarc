@@ -1,0 +1,11 @@
+level_name = "The Third"
+background_texture = "EvilGrass.png"
+music = "Battle_1.wav"
+points_of_interest = [[[7, 0], "Chest"], [[3, 3], "Pole"], [[4, 3], "Pole"], [[5, 3], "Pole"], [[6, 3], "Pole"], [[7, 3], "Pole"], [[8, 3], "Pole"], [[9, 3], "Pole"], [[10, 3], "Pole"], [[10, 2], "Pole"], [[10, 1], "Pole"], [[10, 0], "Pole"], [[10, -1], "Pole"], [[10, -2], "Pole"], [[10, -3], "Pole"], [[9, -3], "Pole"], [[8, -3], "Pole"], [[7, -3], "Pole"], [[6, -3], "Pole"], [[5, -3], "Pole"], [[5, -2], "Pole"], [[5, -1], "Pole"], [[5, 0], "Pole"], [[5, 1], "Pole"], [[6, 1], "Pole"], [[7, 1], "Pole"], [[8, 1], "Pole"], [[8, 0], "Pole"], [[8, -1], "Pole"], [[7, -1], "Pole"], [[7, 2], "Spike"], [[7, -2], "Spike"]]
+
+[[heros]]
+hero_type = "RerinGuard"
+targets = [[448, 0]]
+position = [0, 0]
+speed = 100
+max_health = 60
