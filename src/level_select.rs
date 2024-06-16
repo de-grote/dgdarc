@@ -12,7 +12,10 @@ impl Plugin for LevelSelectPlugin {
             .add_systems(OnEnter(GameState::LevelSelect), (setup, reenter_level))
             .add_systems(
                 Update,
-                button_pressed.run_if(in_state(GameState::LevelSelect)),
+                (
+                    button_pressed.run_if(in_state(GameState::LevelSelect)),
+                    back_button_pressed.run_if(in_state(GameState::LevelSelect)),
+                ),
             )
             .add_systems(
                 OnExit(GameState::LevelSelect),
@@ -32,6 +35,9 @@ pub struct LevelsWon(pub [bool; NUMBER_OF_LEVELS]);
 
 #[derive(Component)]
 pub struct ReenterLevel(pub usize);
+
+#[derive(Component)]
+struct BackToMainButton;
 
 fn setup(
     mut commands: Commands,
@@ -111,6 +117,35 @@ fn setup(
                     });
             }
         });
+
+    commands
+        .spawn((
+            ButtonBundle {
+                style: Style {
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(5.0),
+                    left: Val::Px(5.0),
+                    ..default()
+                },
+                background_color: Color::PINK.into(),
+                ..default()
+            },
+            BackToMainButton,
+            LevelSelectWindow,
+        ))
+        .with_children(|parent| {
+            parent.spawn(
+                TextBundle::from_section(
+                    "Back",
+                    TextStyle {
+                        font_size: 50.0,
+                        color: Color::WHITE,
+                        ..default()
+                    },
+                )
+                .with_no_wrap(),
+            );
+        });
 }
 
 fn button_pressed(
@@ -122,6 +157,17 @@ fn button_pressed(
         if *interaction == Interaction::Pressed {
             *scene = load_scene(level.0);
             state.set(GameState::Gaming);
+        }
+    }
+}
+
+fn back_button_pressed(
+    query: Query<&Interaction, With<BackToMainButton>>,
+    mut state: ResMut<NextState<GameState>>,
+) {
+    for interaction in query.iter() {
+        if *interaction == Interaction::Pressed {
+            state.set(GameState::MainMenu);
         }
     }
 }
@@ -163,11 +209,13 @@ fn load_scene(id: usize) -> LevelScene {
 const fn level(id: usize) -> &'static str {
     match id {
         1 => LEVEL1,
+        2 => LEVEL2,
         _ => unimplemented!(),
     }
 }
 
 static LEVEL_DATA: OnceLock<Vec<LevelScene>> = OnceLock::new();
 
-const NUMBER_OF_LEVELS: usize = 1;
+const NUMBER_OF_LEVELS: usize = 2;
 const LEVEL1: &str = include_str!("../levels/level1.toml");
+const LEVEL2: &str = include_str!("../levels/level2.toml");
